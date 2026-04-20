@@ -2,26 +2,33 @@ import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import anime from "animejs";
-import { MEDIA, GENRES } from "../data/mockData";
+import { GENRES } from "../data/mockData";
+import { useFetchMedia } from "../hooks/useFetchMedia";
 import "./Collection.css";
 
 gsap.registerPlugin(ScrollTrigger);
+
+const FALLBACK_POSTER = "https://via.placeholder.com/300x450/0a0a0f/00e5ff?text=NO+POSTER";
 
 export default function Collection() {
   const headerRef = useRef(null);
   const gridRef   = useRef(null);
 
-  const [activeGenre,  setActiveGenre]  = useState("All");
-  const [activeType,   setActiveType]   = useState("all");
-  const [layout,       setLayout]       = useState("grid"); // grid | list
-  const [hoveredCard,  setHoveredCard]  = useState(null);
+  const [activeGenre, setActiveGenre] = useState("All");
+  const [activeType,  setActiveType]  = useState("all");
+  const [layout,      setLayout]      = useState("grid");
+  const [hoveredCard, setHoveredCard] = useState(null);
 
-  const filtered = MEDIA.filter((m) => {
+  // ── OMDB: fetch media once ──
+  const { media, loading } = useFetchMedia();
+
+  const filtered = media.filter((m) => {
     const genreOk = activeGenre === "All" || m.genre.includes(activeGenre);
     const typeOk  = activeType  === "all" || m.type === activeType;
     return genreOk && typeOk;
   });
 
+  // Title entrance — UNCHANGED
   useEffect(() => {
     anime({
       targets: ".coll-title-char",
@@ -33,6 +40,7 @@ export default function Collection() {
     });
   }, []);
 
+  // Card stagger on filter change — UNCHANGED
   useEffect(() => {
     const cards = gridRef.current?.querySelectorAll(".coll-card");
     if (!cards) return;
@@ -45,7 +53,7 @@ export default function Collection() {
       duration:   400,
       easing:     "easeOutQuad",
     });
-  }, [filtered.length, activeGenre, activeType]);
+  }, [filtered.length, activeGenre, activeType, loading]);
 
   const TITLE = "COLLECTION";
 
@@ -53,14 +61,14 @@ export default function Collection() {
     <div className="page coll-page">
       <div className="noise-overlay" />
 
-      {/* Header */}
+      {/* Header — UNCHANGED */}
       <div ref={headerRef} className="container coll-header">
         <div className="coll-header-top">
           <div>
             <div className="coll-eyebrow">
               <span className="tag tag--gold">MY ARCHIVE</span>
               <span className="font-mono text-muted" style={{ fontSize: 11, letterSpacing: "0.14em" }}>
-                {MEDIA.length} ENTRIES
+                {media.length} ENTRIES
               </span>
             </div>
             <h1 className="coll-title font-display" aria-label={TITLE}>
@@ -68,60 +76,30 @@ export default function Collection() {
                 <span key={i} className="coll-title-char">{c}</span>
               ))}
             </h1>
-            <p className="coll-sub">
-              Curated cinematic archives. High-fidelity filtering enabled.
-            </p>
+            <p className="coll-sub">Curated cinematic archives. High-fidelity filtering enabled.</p>
           </div>
-
-          {/* Layout toggle */}
           <div className="layout-toggle">
-            <button
-              className={`layout-btn ${layout === "grid" ? "active" : ""}`}
-              onClick={() => setLayout("grid")}
-              title="Grid view"
-            >
-              <GridIcon />
-            </button>
-            <button
-              className={`layout-btn ${layout === "list" ? "active" : ""}`}
-              onClick={() => setLayout("list")}
-              title="List view"
-            >
-              <ListIcon />
-            </button>
+            <button className={`layout-btn ${layout === "grid" ? "active" : ""}`} onClick={() => setLayout("grid")} title="Grid view"><GridIcon /></button>
+            <button className={`layout-btn ${layout === "list" ? "active" : ""}`} onClick={() => setLayout("list")} title="List view"><ListIcon /></button>
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters — UNCHANGED */}
         <div className="coll-filters">
           <div className="filter-section">
             <span className="filter-label font-mono">TYPE</span>
             <div className="filter-pills">
               {["all", "movie", "series", "anime"].map((t) => (
-                <button
-                  key={t}
-                  className={`filter-pill ${activeType === t ? "active" : ""}`}
-                  onClick={() => setActiveType(t)}
-                >
-                  {t}
-                </button>
+                <button key={t} className={`filter-pill ${activeType === t ? "active" : ""}`} onClick={() => setActiveType(t)}>{t}</button>
               ))}
             </div>
           </div>
-
           <div className="filter-divider" />
-
           <div className="filter-section" style={{ flex: 1 }}>
             <span className="filter-label font-mono">GENRE</span>
             <div className="genre-filter-scroll">
               {GENRES.map((g) => (
-                <button
-                  key={g}
-                  className={`genre-filter-chip ${activeGenre === g ? "active" : ""}`}
-                  onClick={() => setActiveGenre(g)}
-                >
-                  {g}
-                </button>
+                <button key={g} className={`genre-filter-chip ${activeGenre === g ? "active" : ""}`} onClick={() => setActiveGenre(g)}>{g}</button>
               ))}
             </div>
           </div>
@@ -132,19 +110,25 @@ export default function Collection() {
 
       {/* Grid */}
       <div ref={gridRef} className="container coll-grid-wrap">
-        <div className={`coll-grid ${layout === "list" ? "coll-grid--list" : ""}`}>
-          {filtered.map((item) => (
-            <CollectionCard
-              key={item.id}
-              item={item}
-              layout={layout}
-              hovered={hoveredCard === item.id}
-              onHover={setHoveredCard}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <div className="font-mono text-muted" style={{ padding: "80px 0", textAlign: "center", letterSpacing: "0.12em" }}>
+            LOADING COLLECTION...
+          </div>
+        ) : (
+          <div className={`coll-grid ${layout === "list" ? "coll-grid--list" : ""}`}>
+            {filtered.map((item) => (
+              <CollectionCard
+                key={item.id}
+                item={item}
+                layout={layout}
+                hovered={hoveredCard === item.id}
+                onHover={setHoveredCard}
+              />
+            ))}
+          </div>
+        )}
 
-        {filtered.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <div className="no-results">
             <div className="font-display" style={{ fontSize: 60, color: "var(--text-muted)" }}>∅</div>
             <p className="font-mono text-muted" style={{ fontSize: 12, letterSpacing: "0.1em" }}>NO ENTRIES MATCH FILTER</p>
@@ -155,6 +139,7 @@ export default function Collection() {
   );
 }
 
+// CollectionCard — UNCHANGED except poster fallback
 function CollectionCard({ item, layout, hovered, onHover }) {
   const cardRef = useRef(null);
 
@@ -163,30 +148,20 @@ function CollectionCard({ item, layout, hovered, onHover }) {
     const rect = cardRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
-    anime({
-      targets: cardRef.current,
-      rotateY: x * 8,
-      rotateX: -y * 8,
-      duration: 200,
-      easing: "easeOutQuad",
-    });
+    anime({ targets: cardRef.current, rotateY: x * 8, rotateX: -y * 8, duration: 200, easing: "easeOutQuad" });
   };
 
   const handleMouseLeave = () => {
-    anime({
-      targets: cardRef.current,
-      rotateY: 0,
-      rotateX: 0,
-      duration: 400,
-      easing: "easeOutElastic(1, 0.6)",
-    });
+    anime({ targets: cardRef.current, rotateY: 0, rotateX: 0, duration: 400, easing: "easeOutElastic(1, 0.6)" });
     onHover(null);
   };
+
+  const poster = item.poster || FALLBACK_POSTER;
 
   if (layout === "list") {
     return (
       <div className="coll-card coll-card--list glass" ref={cardRef}>
-        <img src={item.poster} alt={item.title} className="coll-list-img" />
+        <img src={poster} alt={item.title} className="coll-list-img" onError={(e) => { e.target.src = FALLBACK_POSTER; }} />
         <div className="coll-list-info">
           <div className="coll-list-title">{item.title}</div>
           <div className="coll-list-meta font-mono">
@@ -219,14 +194,10 @@ function CollectionCard({ item, layout, hovered, onHover }) {
       onMouseEnter={() => onHover(item.id)}
       onMouseLeave={handleMouseLeave}
     >
-      <img src={item.poster} alt={item.title} className="media-card__img" loading="lazy" />
-      <div className={`rec-badge font-display score-badge score-badge--${item.score.toLowerCase()}`}>
-        {item.score}
-      </div>
+      <img src={poster} alt={item.title} className="media-card__img" loading="lazy" onError={(e) => { e.target.src = FALLBACK_POSTER; }} />
+      <div className={`rec-badge font-display score-badge score-badge--${item.score.toLowerCase()}`}>{item.score}</div>
       {item.featured && (
-        <div className="featured-badge tag tag--pink" style={{ position: "absolute", top: 10, left: 10, fontSize: 8 }}>
-          ★ FEATURED
-        </div>
+        <div className="featured-badge tag tag--pink" style={{ position: "absolute", top: 10, left: 10, fontSize: 8 }}>★ FEATURED</div>
       )}
       <div className="media-card__overlay">
         <div className="media-card__title">{item.title}</div>

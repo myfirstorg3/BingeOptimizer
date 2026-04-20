@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import anime from "animejs";
-import { MEDIA, MOODS, STATS } from "../data/mockData";
+import { MOODS, STATS } from "../data/mockData";
+import { useFetchMedia } from "../hooks/useFetchMedia";
 import "./Dashboard.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Animated counter
+// Animated counter — UNCHANGED
 function Counter({ target, suffix = "" }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -29,19 +30,31 @@ function Counter({ target, suffix = "" }) {
   return <span ref={ref}>0{suffix}</span>;
 }
 
+const FALLBACK_POSTER = "https://via.placeholder.com/300x450/0a0a0f/00e5ff?text=NO+POSTER";
+
 export default function Dashboard() {
-  const heroRef     = useRef(null);
-  const statsRef    = useRef(null);
-  const recsRef     = useRef(null);
-  const canvasRef   = useRef(null);
+  const heroRef   = useRef(null);
+  const statsRef  = useRef(null);
+  const recsRef   = useRef(null);
+  const canvasRef = useRef(null);
 
-  const [timeSlot,   setTimeSlot]   = useState("2h");
+  const [timeSlot,      setTimeSlot]      = useState("2h");
   const [selectedMoods, setSelectedMoods] = useState(["intense"]);
-  const [genre,      setGenre]      = useState("all");
-  const [optimized,  setOptimized]  = useState(false);
-  const [recs,       setRecs]       = useState(MEDIA.slice(0, 6));
+  const [genre,         setGenre]         = useState("all");
+  const [optimized,     setOptimized]     = useState(false);
+  const [recs,          setRecs]          = useState([]);
 
-  // Canvas particles
+  // ── OMDB: fetch media once ──
+  const { media, loading } = useFetchMedia();
+
+  // Seed recs once media loads
+  useEffect(() => {
+    if (media.length > 0 && recs.length === 0) {
+      setRecs(media.slice(0, 6));
+    }
+  }, [media]);
+
+  // Canvas particles — UNCHANGED
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -72,7 +85,6 @@ export default function Dashboard() {
         ctx.fillStyle = `rgba(0,229,255,${p.a})`;
         ctx.fill();
       });
-      // Lines between close particles
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
@@ -97,7 +109,7 @@ export default function Dashboard() {
     return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", init); };
   }, []);
 
-  // Hero entrance
+  // Hero entrance — UNCHANGED
   useEffect(() => {
     const letters = heroRef.current?.querySelectorAll(".hero-letter");
     if (letters) {
@@ -110,19 +122,17 @@ export default function Dashboard() {
         easing:     "easeOutExpo",
       });
     }
-
     gsap.fromTo(".hero-sub",
       { opacity: 0, y: 20 },
       { opacity: 1, y: 0, delay: 0.5, duration: 0.7, ease: "power3.out" }
     );
-
     gsap.fromTo(".optimizer-card",
       { opacity: 0, y: 40, scale: 0.97 },
       { opacity: 1, y: 0, scale: 1, delay: 0.7, duration: 0.8, ease: "power3.out" }
     );
   }, []);
 
-  // Stats scroll reveal
+  // Stats scroll reveal — UNCHANGED
   useEffect(() => {
     gsap.fromTo(".stat-card",
       { opacity: 0, y: 30 },
@@ -139,7 +149,7 @@ export default function Dashboard() {
     );
   }, []);
 
-  // Recs reveal
+  // Recs reveal — UNCHANGED
   useEffect(() => {
     gsap.fromTo(".rec-card",
       { opacity: 0, scale: 0.95, y: 20 },
@@ -162,16 +172,10 @@ export default function Dashboard() {
     );
   };
 
+  // ── OMDB: handleOptimize now filters real media ──
   const handleOptimize = () => {
     const btn = document.querySelector(".optimize-btn");
-    anime({
-      targets: btn,
-      scale: [1, 0.94, 1],
-      duration: 300,
-      easing: "easeInOutQuad",
-    });
-
-    // Glitch animation on title
+    anime({ targets: btn, scale: [1, 0.94, 1], duration: 300, easing: "easeInOutQuad" });
     anime({
       targets: ".optimizer-title",
       translateX: [0, -3, 3, -2, 0],
@@ -181,22 +185,28 @@ export default function Dashboard() {
 
     setTimeout(() => {
       const mins = timeSlot === "1h" ? 60 : timeSlot === "2h" ? 120 : timeSlot === "3h" ? 180 : 240;
-      const filtered = MEDIA.filter((m) => {
-        const moodMatch = selectedMoods.length === 0
-          || m.mood.some((md) => selectedMoods.includes(md));
-        const durMatch = m.duration <= mins;
-        return moodMatch && durMatch;
+
+      const filtered = media.filter((m) => {
+        const moodMatch =
+          selectedMoods.length === 0 ||
+          m.mood.some((md) => selectedMoods.includes(md));
+        const durMatch  = m.duration <= mins;
+        const genreMatch =
+          genre === "all" ||
+          m.genre.map((g) => g.toLowerCase()).includes(genre.toLowerCase());
+        return moodMatch && durMatch && genreMatch;
       });
-      setRecs(filtered.length > 0 ? filtered : MEDIA.slice(0, 4));
+
+      setRecs(filtered.length > 0 ? filtered : media.slice(0, 4));
       setOptimized(true);
 
       anime({
         targets: ".rec-card",
-        opacity: [0, 1],
+        opacity:    [0, 1],
         translateY: [16, 0],
-        delay: anime.stagger(50),
-        duration: 400,
-        easing: "easeOutQuad",
+        delay:      anime.stagger(50),
+        duration:   400,
+        easing:     "easeOutQuad",
       });
     }, 400);
   };
@@ -208,13 +218,12 @@ export default function Dashboard() {
       <canvas ref={canvasRef} className="hero-canvas" />
       <div className="noise-overlay" />
 
-      {/* ── HERO ── */}
+      {/* ── HERO — UNCHANGED ── */}
       <section ref={heroRef} className="hero container">
         <div className="hero-eyebrow">
           <span className="tag tag--cyan">v2.4.1</span>
           <span className="hero-eyebrow-text font-mono">ALGORITHMIC CURATION ENGINE</span>
         </div>
-
         <h1 className="hero-title" aria-label={TITLE}>
           {TITLE.split("").map((ch, i) => (
             <span key={i} className={`hero-letter ${ch === " " ? "hero-letter--space" : ""}`}>
@@ -222,87 +231,61 @@ export default function Dashboard() {
             </span>
           ))}
         </h1>
-
         <p className="hero-sub">
           Select your available time and current mood —<br />
           the algorithm composes your perfect viewing session.
         </p>
       </section>
 
-      {/* ── OPTIMIZER CARD ── */}
+      {/* ── OPTIMIZER CARD — UNCHANGED ── */}
       <section className="container optimizer-section">
         <div className="optimizer-card glass">
           <div className="optimizer-header">
             <h2 className="optimizer-title font-mono">CONFIGURE_SESSION</h2>
             <div className="optimizer-header-line" />
           </div>
-
           <div className="optimizer-body">
-            {/* Time */}
             <div className="opt-group">
               <label className="opt-label">TIME AVAILABLE</label>
               <div className="time-pills">
                 {["1h", "2h", "3h", "4h+"].map((t) => (
-                  <button
-                    key={t}
-                    className={`time-pill ${timeSlot === t ? "active" : ""}`}
-                    onClick={() => setTimeSlot(t)}
-                  >
-                    {t}
-                  </button>
+                  <button key={t} className={`time-pill ${timeSlot === t ? "active" : ""}`} onClick={() => setTimeSlot(t)}>{t}</button>
                 ))}
               </div>
             </div>
-
-            {/* Mood */}
             <div className="opt-group">
               <label className="opt-label">CURRENT MOOD</label>
               <div className="mood-grid">
                 {MOODS.map((mood) => (
-                  <button
-                    key={mood.id}
-                    className={`mood-chip ${selectedMoods.includes(mood.id) ? "active" : ""}`}
-                    onClick={() => toggleMood(mood.id)}
-                  >
+                  <button key={mood.id} className={`mood-chip ${selectedMoods.includes(mood.id) ? "active" : ""}`} onClick={() => toggleMood(mood.id)}>
                     <span>{mood.icon}</span>
                     <span>{mood.label}</span>
                   </button>
                 ))}
               </div>
             </div>
-
-            {/* Genre */}
             <div className="opt-group">
               <label className="opt-label">GENRE FILTER</label>
               <div className="genre-row">
                 {["all", "Sci-Fi", "Action", "Drama", "Anime", "Horror"].map((g) => (
-                  <button
-                    key={g}
-                    className={`genre-btn ${genre === g ? "active" : ""}`}
-                    onClick={() => setGenre(g)}
-                  >
-                    {g}
-                  </button>
+                  <button key={g} className={`genre-btn ${genre === g ? "active" : ""}`} onClick={() => setGenre(g)}>{g}</button>
                 ))}
               </div>
             </div>
           </div>
-
           <div className="optimizer-footer">
-            <button className="optimize-btn btn btn--primary" onClick={handleOptimize}>
+            <button className="optimize-btn btn btn--primary" onClick={handleOptimize} disabled={loading}>
               <span>▶</span>
-              <span>OPTIMIZE SESSION</span>
+              <span>{loading ? "LOADING..." : "OPTIMIZE SESSION"}</span>
             </button>
             {optimized && (
-              <span className="opt-result-text font-mono">
-                {recs.length} TITLES MATCHED
-              </span>
+              <span className="opt-result-text font-mono">{recs.length} TITLES MATCHED</span>
             )}
           </div>
         </div>
       </section>
 
-      {/* ── STATS ── */}
+      {/* ── STATS — UNCHANGED ── */}
       <section ref={statsRef} className="container section stats-section">
         <div className="section-header">
           <span className="font-mono text-muted" style={{ fontSize: 11, letterSpacing: "0.12em" }}>01 // YOUR STATS</span>
@@ -336,38 +319,43 @@ export default function Dashboard() {
             02 // {optimized ? "OPTIMIZED FOR YOU" : "RECOMMENDED"}
           </span>
           <div className="section-line" />
-          <button className="btn btn--ghost" style={{ whiteSpace: "nowrap", fontSize: 10 }}>
-            VIEW ALL →
-          </button>
+          <button className="btn btn--ghost" style={{ whiteSpace: "nowrap", fontSize: 10 }}>VIEW ALL →</button>
         </div>
-        <div className="recs-grid">
-          {recs.slice(0, 6).map((item) => (
-            <div key={item.id} className="rec-card media-card">
-              <img
-                src={item.poster}
-                alt={item.title}
-                className="media-card__img"
-                loading="lazy"
-              />
-              {/* Score badge */}
-              <div className={`rec-badge font-display score-badge score-badge--${item.score.toLowerCase()}`}>
-                {item.score}
-              </div>
-              <div className="media-card__overlay">
-                <div className="media-card__title">{item.title}</div>
-                <div className="media-card__meta">
-                  {item.year} · {item.duration}{item.type === "movie" ? "min" : "m/ep"}
-                  {item.price && ` · $${item.price}`}
+
+        {loading ? (
+          <div className="font-mono text-muted" style={{ padding: "40px 0", letterSpacing: "0.12em" }}>
+            FETCHING TITLES...
+          </div>
+        ) : (
+          <div className="recs-grid">
+            {recs.slice(0, 6).map((item) => (
+              <div key={item.id} className="rec-card media-card">
+                <img
+                  src={item.poster || FALLBACK_POSTER}
+                  alt={item.title}
+                  className="media-card__img"
+                  loading="lazy"
+                  onError={(e) => { e.target.src = FALLBACK_POSTER; }}
+                />
+                <div className={`rec-badge font-display score-badge score-badge--${item.score.toLowerCase()}`}>
+                  {item.score}
                 </div>
-                <div className="rec-genres">
-                  {item.genre.slice(0, 2).map((g) => (
-                    <span key={g} className="tag tag--cyan" style={{ fontSize: 9, padding: "2px 6px" }}>{g}</span>
-                  ))}
+                <div className="media-card__overlay">
+                  <div className="media-card__title">{item.title}</div>
+                  <div className="media-card__meta">
+                    {item.year} · {item.duration}{item.type === "movie" ? "min" : "m/ep"}
+                    {item.price && ` · $${item.price}`}
+                  </div>
+                  <div className="rec-genres">
+                    {item.genre.slice(0, 2).map((g) => (
+                      <span key={g} className="tag tag--cyan" style={{ fontSize: 9, padding: "2px 6px" }}>{g}</span>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

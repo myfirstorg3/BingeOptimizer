@@ -1,184 +1,31 @@
+// src/data/mockData.js
 // ─── BLASTOISE MOCK DATA ───────────────────────────────────
+// MEDIA is now fetched from OMDB at runtime via useFetchMedia().
+// SEED defines which IMDb IDs to load + their app-specific metadata.
 
-export const MEDIA = [
-  {
-    id: 1,
-    title: "Neon Nexus",
-    year: 2024,
-    genre: ["Sci-Fi", "Thriller"],
-    type: "movie",
-    rating: 9.1,
-    duration: 148,
-    mood: ["intense", "cerebral"],
-    poster: "https://picsum.photos/seed/neon/300/450",
-    score: "S",
-    synopsis: "A disgraced hacker uncovers a conspiracy woven into the city's neural grid.",
-    price: null,
-  },
-  {
-    id: 2,
-    title: "The Monolith",
-    year: 2023,
-    genre: ["Drama", "Mystery"],
-    type: "movie",
-    rating: 8.7,
-    duration: 122,
-    mood: ["slow-burn", "atmospheric"],
-    poster: "https://picsum.photos/seed/mono/300/450",
-    score: "A",
-    synopsis: "An alien structure appears overnight in the Sahara. The world unravels.",
-    price: null,
-  },
-  {
-    id: 3,
-    title: "Aether Flux",
-    year: 2024,
-    genre: ["Action", "Sci-Fi"],
-    type: "series",
-    rating: 8.4,
-    duration: 42,
-    mood: ["kinetic", "fun"],
-    poster: "https://picsum.photos/seed/aeth/300/450",
-    score: "A",
-    synopsis: "A mercenary team navigates parallel dimensions to prevent total collapse.",
-    price: 3.99,
-  },
-  {
-    id: 4,
-    title: "System Crash",
-    year: 2023,
-    genre: ["Cyberpunk", "Action"],
-    type: "series",
-    rating: 7.9,
-    duration: 35,
-    mood: ["intense", "kinetic"],
-    poster: "https://picsum.photos/seed/sysc/300/450",
-    score: "B",
-    synopsis: "Corporate espionage in a world where memory is currency.",
-    price: 2.49,
-  },
-  {
-    id: 5,
-    title: "Orbit",
-    year: 2024,
-    genre: ["Drama", "Space"],
-    type: "series",
-    rating: 9.3,
-    duration: 55,
-    mood: ["slow-burn", "emotional"],
-    poster: "https://picsum.photos/seed/orbi/300/450",
-    score: "S",
-    synopsis: "Eight astronauts. One station. An Earth that stopped responding.",
-    price: null,
-  },
-  {
-    id: 6,
-    title: "Aqua Burst #042",
-    year: 2024,
-    genre: ["Anime", "Action"],
-    type: "anime",
-    rating: 8.8,
-    duration: 24,
-    mood: ["kinetic", "fun"],
-    poster: "https://picsum.photos/seed/aqua/300/450",
-    score: "A",
-    synopsis: "Pressure-pulse warriors battle in an ocean-world championship arc.",
-    price: 3.46,
-  },
-  {
-    id: 7,
-    title: "Abyssal Shell",
-    year: 2023,
-    genre: ["Anime", "Thriller"],
-    type: "anime",
-    rating: 9.0,
-    duration: 24,
-    mood: ["cerebral", "atmospheric"],
-    poster: "https://picsum.photos/seed/abys/300/450",
-    score: "S",
-    synopsis: "A lone diver discovers the deep sea houses forgotten civilizations.",
-    price: 2.10,
-  },
-  {
-    id: 8,
-    title: "Hydro Cannon V-Max",
-    year: 2024,
-    genre: ["Anime", "Sci-Fi", "Action"],
-    type: "anime",
-    rating: 9.5,
-    duration: 28,
-    mood: ["kinetic", "intense", "fun"],
-    poster: "https://picsum.photos/seed/hydr/300/450",
-    score: "S",
-    synopsis: "Featured tonight — Tournament arc finale. Hydro vs. the Void Emperor.",
-    price: 1.20,
-    featured: true,
-  },
-  {
-    id: 9,
-    title: "Tidal Wave #008",
-    year: 2023,
-    genre: ["Anime", "Adventure"],
-    type: "anime",
-    rating: 8.1,
-    duration: 22,
-    mood: ["fun", "atmospheric"],
-    poster: "https://picsum.photos/seed/tida/300/450",
-    score: "B",
-    synopsis: "The tidal warriors face their greatest challenge yet across the seven seas.",
-    price: 3.08,
-  },
-  {
-    id: 10,
-    title: "Torrential Core",
-    year: 2024,
-    genre: ["Sci-Fi", "Horror"],
-    type: "movie",
-    rating: 8.6,
-    duration: 110,
-    mood: ["intense", "cerebral"],
-    poster: "https://picsum.photos/seed/torr/300/450",
-    score: "A",
-    synopsis: "Energy experiments unlock a dimension of pure entropy.",
-    price: 5.88,
-  },
-  {
-    id: 11,
-    title: "Void Protocol",
-    year: 2024,
-    genre: ["Thriller", "Mystery"],
-    type: "movie",
-    rating: 7.8,
-    duration: 130,
-    mood: ["slow-burn", "cerebral"],
-    poster: "https://picsum.photos/seed/void/300/450",
-    score: "B",
-    synopsis: "A signal from the edge of the observable universe changes everything.",
-    price: null,
-  },
-  {
-    id: 12,
-    title: "Chrome Dreams",
-    year: 2023,
-    genre: ["Drama", "Cyberpunk"],
-    type: "series",
-    rating: 8.3,
-    duration: 45,
-    mood: ["atmospheric", "emotional"],
-    poster: "https://picsum.photos/seed/chro/300/450",
-    score: "A",
-    synopsis: "In a city of immortals, one woman chooses to die.",
-    price: 4.20,
-  },
+export const SEED = [
+  { imdbID: "tt0816692", score: "S", mood: ["emotional", "cerebral"],    price: null,  featured: false }, // Interstellar
+  { imdbID: "tt0468569", score: "A", mood: ["intense", "cerebral"],      price: null,  featured: false }, // The Dark Knight
+  { imdbID: "tt1375666", score: "A", mood: ["cerebral", "intense"],      price: 3.99,  featured: false }, // Inception
+  { imdbID: "tt0245429", score: "S", mood: ["atmospheric", "emotional"], price: null,  featured: false }, // Spirited Away
+  { imdbID: "tt0120737", score: "S", mood: ["emotional", "atmospheric"], price: null,  featured: false }, // LOTR Fellowship
+  { imdbID: "tt4154796", score: "A", mood: ["intense", "fun"],           price: null,  featured: true  }, // Avengers Endgame
+  { imdbID: "tt0137523", score: "S", mood: ["cerebral", "intense"],      price: 2.49,  featured: false }, // Fight Club
+  { imdbID: "tt0133093", score: "S", mood: ["cerebral", "kinetic"],      price: null,  featured: false }, // The Matrix
+  { imdbID: "tt0110912", score: "A", mood: ["intense", "cerebral"],      price: null,  featured: false }, // Pulp Fiction
+  { imdbID: "tt0108052", score: "A", mood: ["emotional", "slow-burn"],   price: null,  featured: false }, // Schindler's List
+  { imdbID: "tt0167260", score: "B", mood: ["emotional", "atmospheric"], price: 1.99,  featured: false }, // LOTR Return of the King
+  { imdbID: "tt0076759", score: "B", mood: ["fun", "kinetic"],           price: null,  featured: false }, // Star Wars
 ];
 
-export const TIER_ITEMS_DEFAULT = {
-  S: [MEDIA[0], MEDIA[4], MEDIA[7]],
-  A: [MEDIA[1], MEDIA[2], MEDIA[5], MEDIA[6]],
-  B: [MEDIA[3], MEDIA[8]],
-  C: [MEDIA[9], MEDIA[11]],
-  D: [MEDIA[10]],
-  unranked: [],
+// Tier defaults — index into SEED array (same order as before)
+export const TIER_ITEMS_DEFAULT_SEED = {
+  S: [0, 4, 7],    // Interstellar, LOTR Fellowship, The Matrix
+  A: [1, 2, 5],    // Dark Knight, Inception, Endgame
+  B: [3, 8, 11],   // Spirited Away, Pulp Fiction, Star Wars
+  C: [9],          // Schindler's List
+  D: [10],         // LOTR Return
+  unranked: [6],   // Fight Club
 };
 
 export const TIER_COLORS = {
@@ -204,9 +51,9 @@ export const GENRES = ["All", "Sci-Fi", "Drama", "Thriller", "Action", "Anime", 
 
 export const STATS = {
   totalWatched: 247,
-  hoursLogged: 1839,
-  avgRating: 8.4,
-  topGenre: "Sci-Fi",
-  streak: 14,
-  thisWeek: 9,
+  hoursLogged:  1839,
+  avgRating:    8.4,
+  topGenre:     "Sci-Fi",
+  streak:       14,
+  thisWeek:     9,
 };

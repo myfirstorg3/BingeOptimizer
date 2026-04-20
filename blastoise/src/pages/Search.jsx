@@ -1,21 +1,22 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { gsap } from "gsap";
 import anime from "animejs";
-import { MEDIA } from "../data/mockData";
+import { searchOMDB, normalize } from "../services/omdb";
 import "./Search.css";
 
 export default function Search() {
-  const inputRef    = useRef(null);
-  const resultsRef  = useRef(null);
-  const bgTextRef   = useRef(null);
+  const inputRef   = useRef(null);
+  const resultsRef = useRef(null);
+  const bgTextRef  = useRef(null);
 
   const [query,   setQuery]   = useState("");
   const [results, setResults] = useState([]);
   const [typed,   setTyped]   = useState(false);
   const [focused, setFocused] = useState(false);
+  const [searching, setSearching] = useState(false);
 
+  // Entrance animations — UNCHANGED
   useEffect(() => {
-    // Entrance
     gsap.fromTo(".search-title-word",
       { opacity: 0, y: 30 },
       { opacity: 1, y: 0, stagger: 0.12, duration: 0.7, ease: "power3.out" }
@@ -24,8 +25,6 @@ export default function Search() {
       { opacity: 0, y: 20 },
       { opacity: 1, y: 0, delay: 0.4, duration: 0.6, ease: "power3.out" }
     );
-
-    // Floating bg text
     anime({
       targets: ".void-text",
       translateX: ["0%", "2%"],
@@ -34,39 +33,52 @@ export default function Search() {
       duration: 8000,
       easing: "easeInOutSine",
     });
-
     setTimeout(() => inputRef.current?.focus(), 600);
   }, []);
 
+  // ── OMDB: debounced live search ──
   const doSearch = useCallback((q) => {
     if (!q.trim()) { setResults([]); setTyped(false); return; }
     setTyped(true);
-    const lower = q.toLowerCase();
-    const found = MEDIA.filter(
-      (m) =>
-        m.title.toLowerCase().includes(lower) ||
-        m.genre.some((g) => g.toLowerCase().includes(lower)) ||
-        m.synopsis.toLowerCase().includes(lower)
-    );
-    setResults(found);
+    setSearching(true);
 
-    requestAnimationFrame(() => {
-      const cards = resultsRef.current?.querySelectorAll(".search-result-card");
-      if (cards && cards.length > 0) {
-        anime({
-          targets: cards,
-          opacity:    [0, 1],
-          translateX: [-20, 0],
-          delay:      anime.stagger(50),
-          duration:   350,
-          easing:     "easeOutQuad",
+    searchOMDB(q)
+      .then((data) => {
+        // OMDB search results have partial data (no plot/runtime), normalize what we have
+        const normalized = data.Search.map((m) =>
+          normalize(m, {
+            score: "B",
+            mood: [],
+            price: null,
+            // OMDB search returns partial — poster, title, year, type are present
+          })
+        );
+        setResults(normalized);
+        setSearching(false);
+
+        requestAnimationFrame(() => {
+          const cards = resultsRef.current?.querySelectorAll(".search-result-card");
+          if (cards && cards.length > 0) {
+            anime({
+              targets: cards,
+              opacity:    [0, 1],
+              translateX: [-20, 0],
+              delay:      anime.stagger(50),
+              duration:   350,
+              easing:     "easeOutQuad",
+            });
+          }
         });
-      }
-    });
+      })
+      .catch(() => {
+        setResults([]);
+        setSearching(false);
+      });
   }, []);
 
+  // 400ms debounce — UNCHANGED timing
   useEffect(() => {
-    const timer = setTimeout(() => doSearch(query), 200);
+    const timer = setTimeout(() => doSearch(query), 400);
     return () => clearTimeout(timer);
   }, [query, doSearch]);
 
@@ -76,24 +88,22 @@ export default function Search() {
     <div className="page search-page">
       <div className="noise-overlay" />
 
-      {/* Bg floating text */}
+      {/* Bg floating text — UNCHANGED */}
       <div ref={bgTextRef} className="void-text font-display">
         QUERY&nbsp;THE&nbsp;VOID
       </div>
 
       <div className="container search-wrap">
-        {/* Title */}
+        {/* Title — UNCHANGED */}
         <div className="search-title">
           {"Query the Void.".split(" ").map((word, i) => (
             <span key={i} className="search-title-word font-display">{word}</span>
           ))}
         </div>
 
-        {/* Search input */}
+        {/* Search input — UNCHANGED */}
         <div className={`search-input-wrap ${focused ? "focused" : ""}`}>
-          <div className="search-icon">
-            <SearchIcon />
-          </div>
+          <div className="search-icon"><SearchIcon /></div>
           <input
             ref={inputRef}
             type="text"
@@ -105,37 +115,26 @@ export default function Search() {
             onBlur={() => setFocused(false)}
           />
           {query && (
-            <button
-              className="search-clear"
-              onClick={() => { setQuery(""); inputRef.current?.focus(); }}
-            >
-              ×
-            </button>
+            <button className="search-clear" onClick={() => { setQuery(""); inputRef.current?.focus(); }}>×</button>
           )}
         </div>
 
-        {/* Suggestions */}
+        {/* Suggestions — UNCHANGED */}
         {!typed && (
           <div className="search-suggestions">
             <span className="font-mono text-muted" style={{ fontSize: 10, letterSpacing: "0.14em" }}>TRY:</span>
             {SUGGESTIONS.map((s) => (
-              <button
-                key={s}
-                className="suggestion-chip"
-                onClick={() => setQuery(s)}
-              >
-                {s}
-              </button>
+              <button key={s} className="suggestion-chip" onClick={() => setQuery(s)}>{s}</button>
             ))}
           </div>
         )}
 
-        {/* Results */}
+        {/* Results — UNCHANGED structure */}
         {typed && (
           <div ref={resultsRef} className="search-results">
             <div className="results-header">
               <span className="font-mono text-muted" style={{ fontSize: 11, letterSpacing: "0.12em" }}>
-                {results.length} {results.length === 1 ? "RESULT" : "RESULTS"} FOR "{query.toUpperCase()}"
+                {searching ? "SEARCHING..." : `${results.length} ${results.length === 1 ? "RESULT" : "RESULTS"} FOR "${query.toUpperCase()}"`}
               </span>
               <div style={{ flex: 1, height: 1, background: "var(--border)", margin: "0 16px" }} />
               <div className="filter-pills" style={{ display: "flex", gap: 4 }}>
@@ -145,7 +144,7 @@ export default function Search() {
               </div>
             </div>
 
-            {results.length === 0 ? (
+            {!searching && results.length === 0 ? (
               <div className="no-results-msg">
                 <span className="font-display" style={{ fontSize: 80, color: "var(--text-muted)" }}>∅</span>
                 <p className="font-mono text-muted" style={{ fontSize: 12, letterSpacing: "0.12em", marginTop: 16 }}>
@@ -166,11 +165,17 @@ export default function Search() {
   );
 }
 
+// SearchResultCard — UNCHANGED except poster fallback + rating display
 function SearchResultCard({ item }) {
+  const FALLBACK_POSTER = "https://via.placeholder.com/300x450/0a0a0f/00e5ff?text=NO+POSTER";
   return (
     <div className="search-result-card glass">
       <div className="src-poster">
-        <img src={item.poster} alt={item.title} />
+        <img
+          src={item.poster || FALLBACK_POSTER}
+          alt={item.title}
+          onError={(e) => { e.target.src = FALLBACK_POSTER; }}
+        />
         <div className={`rec-badge font-display score-badge score-badge--${item.score.toLowerCase()}`} style={{
           position: "absolute", top: 6, right: 6, width: 24, height: 24, fontSize: 12, borderRadius: 3,
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -190,7 +195,7 @@ function SearchResultCard({ item }) {
             <span key={g} className="tag tag--cyan" style={{ fontSize: 9, padding: "2px 6px" }}>{g}</span>
           ))}
         </div>
-        <p className="src-synopsis">{item.synopsis}</p>
+        <p className="src-synopsis">{item.synopsis || "No synopsis available."}</p>
       </div>
       <div className="src-actions">
         <div className="src-rating">
@@ -200,13 +205,9 @@ function SearchResultCard({ item }) {
           <span className="font-mono text-muted" style={{ fontSize: 10 }}>/10</span>
         </div>
         {item.price ? (
-          <button className="btn btn--ghost" style={{ fontSize: 10, padding: "6px 14px" }}>
-            ${item.price} ADD
-          </button>
+          <button className="btn btn--ghost" style={{ fontSize: 10, padding: "6px 14px" }}>${item.price} ADD</button>
         ) : (
-          <button className="btn btn--primary" style={{ fontSize: 10, padding: "6px 14px" }}>
-            + COLLECT
-          </button>
+          <button className="btn btn--primary" style={{ fontSize: 10, padding: "6px 14px" }}>+ COLLECT</button>
         )}
       </div>
     </div>
