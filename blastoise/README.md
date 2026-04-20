@@ -70,7 +70,8 @@ Fonts:       Bebas Neue (display) · Syne (UI) · JetBrains Mono (data)
 
 ```bash
 # Install dependencies
-npm install
+npm install vite@7.3.2
+npm i
 
 # Start development server
 npm run dev
