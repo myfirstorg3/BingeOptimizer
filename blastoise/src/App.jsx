@@ -3,12 +3,17 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Navbar from "./components/Navbar";
-import Cursor from "./components/Cursor";
+import Cursor  from "./components/Cursor";
+import Footer  from "./components/Footer";
 import Dashboard  from "./pages/Dashboard";
 import Collection from "./pages/Collection";
 import TierList   from "./pages/TierList";
 import Search     from "./pages/Search";
 import Settings   from "./pages/Settings";
+import Contact  from "./pages/Contact";
+import Members    from "./pages/Members";
+import Terms      from "./pages/Terms";
+import Page67     from "./pages/Page67";
 import "./styles/globals.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -42,8 +47,13 @@ export default function App() {
           <Route path="/tierlist"   element={<TierList />}   />
           <Route path="/search"     element={<Search />}     />
           <Route path="/settings"   element={<Settings />}   />
+          <Route path="/contact"    element={<Contact />}    />
+          <Route path="/members"    element={<Members />}    />
+          <Route path="/terms"      element={<Terms />}      />
+          <Route path="/67"         element={<Page67 />}     />
         </Routes>
       </PageWrapper>
+      <Footer />
     </BrowserRouter>
   );
 }
