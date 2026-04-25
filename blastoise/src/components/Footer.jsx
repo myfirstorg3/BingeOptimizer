@@ -1,44 +1,31 @@
-import { useRef } from "react";
-import { Link } from "react-router-dom";
+import React from 'react';
+import { Link } from 'react-router-dom';
 
-export default function Footer() {
-
+function Footer() {
   return (
-    <footer className="footer">
-      <div className="footer__inner">
+    <footer className="flex justify-center items-center px-6 py-4 border-t border-[#2A2A2A] text-sm text-gray-400 gap-8 text-[18px]">
 
-        {/* ── Brand ── */}
-        <div className="footer__brand">
-          <span className="footer__logo font-display">BLAST<span className="text-cyan">OISE</span></span>
-          <span className="footer__tagline font-mono">// binge smarter, not harder</span>
+      {/* Right Side - Links */}
+      <div className="flex space-x-6">
+        <div>
+          &copy; {new Date().getFullYear()} &nbsp;&nbsp; Blastoise - All rights reserved
         </div>
-
-        {/* ── Divider ── */}
-        <hr className="divider footer__divider" />
-
-        {/* ── Nav + Copy row ── */}
-        <div className="footer__bottom">
-          <p className="footer__copy font-mono">
-            &copy; {new Date().getFullYear()} Blastoise — All rights reserved.
-          </p>
-
-          <nav className="footer__links">
-            <Link to="/contact" className="footer__link font-mono">Contact</Link>
-            <span className="footer__sep" aria-hidden="true" />
-            <Link to="/members" className="footer__link font-mono">Members</Link>
-            <span className="footer__sep" aria-hidden="true" />
-            <Link to="/terms"   className="footer__link font-mono">Terms</Link>
-            <span className="footer__sep" aria-hidden="true" />
-            <Link
-              to="/67"
-              className="footer__link footer__67 font-mono text-cyan glow-cyan"
-            >
-              67
-            </Link>
-          </nav>
-        </div>
-
+        <Link to="/members" className="hover:text-white transition-colors duration-200">
+          Members
+        </Link>
+        <Link to="/page-67" className="hover:text-white transition-colors duration-200">
+          67
+        </Link>
+        <Link to="/terms" className="hover:text-white transition-colors duration-200">
+          Terms of Service
+        </Link>
+        <Link to="/contact" className="hover:text-white transition-colors duration-200">
+          Contact Us
+        </Link>
       </div>
+      
     </footer>
   );
 }
+
+export default Footer;
