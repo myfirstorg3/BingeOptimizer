@@ -1,0 +1,225 @@
+.settings-page { min-height: 100vh; }
+
+.settings-wrap {
+  padding-top: 80px;
+  padding-bottom: 80px;
+}
+
+.settings-title {
+  font-size: clamp(48px, 7vw, 100px);
+  line-height: 0.92;
+  letter-spacing: 0.04em;
+  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.settings-title span { display: inline-block; opacity: 0; }
+
+.settings-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 48px;
+  max-width: 480px;
+}
+
+/* Layout */
+.settings-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Sidebar */
+.settings-sidebar {
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  opacity: 0;
+  position: sticky;
+  top: calc(var(--nav-height) + 24px);
+}
+
+.sidebar-header {
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sidebar-avatar img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border-bright);
+}
+
+.avatar-status-dot {
+  position: absolute;
+  bottom: 2px; right: 2px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--green);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 6px var(--green);
+}
+
+.sidebar-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sidebar-email {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+
+.sidebar-nav {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: left;
+  transition: all 0.2s;
+  cursor: none;
+}
+
+.sidebar-item:hover { background: var(--surface-2); color: var(--text-primary); }
+
+.sidebar-item.active {
+  background: var(--cyan-dim);
+  color: var(--cyan);
+}
+
+.sidebar-item.danger { color: var(--pink); }
+.sidebar-item.danger:hover { background: var(--pink-dim); }
+
+.sidebar-item__icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+}
+
+.sidebar-item__label { flex: 1; }
+
+.sidebar-item__arrow {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+/* Content */
+.settings-content { opacity: 0; }
+
+.settings-card {
+  border-radius: var(--r-lg);
+  padding: 28px 32px;
+}
+
+.card-title {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Avatar */
+.avatar-section {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.avatar-preview {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--border-bright);
+  flex-shrink: 0;
+}
+
+.avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Form */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.form-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* Toggle rows */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 4px 0;
+}
+
+.toggle-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.toggle-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Actions */
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.save-btn { min-width: 140px; justify-content: center; }
+
+@media (max-width: 900px) {
+  .settings-layout { grid-template-columns: 1fr; }
+  .settings-sidebar { position: static; }
+}

@@ -85,9 +85,9 @@ const TierList = () => {
                 <TierCard
                   key={movie.id}
                   title={movie.title}
-                  poster={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-                  rating={movie.vote_average?.toFixed(1)}
-                  year={movie.release_date?.slice(0, 4)}
+                  poster={movie.poster}
+                  rating={movie.rating?.toFixed(1)}
+                  year={movie.year}
                   draggable={true}
                   onDragStart={() => handleDragStart(movie, tier.label)}
                 />
@@ -110,9 +110,9 @@ const TierList = () => {
             <TierCard
               key={movie.id}
               title={movie.title}
-              poster={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-              rating={movie.vote_average?.toFixed(1)}
-              year={movie.release_date?.slice(0, 4)}
+              poster={movie.poster}
+              rating={movie.rating?.toFixed(1)}
+              year={movie.year}
               draggable={true}
               onDragStart={() => handleDragStart(movie, "unranked")}
             />

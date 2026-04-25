@@ -1,0 +1,162 @@
+
+erDiagram
+    USERS {
+        uuid id PK
+        string username
+        string email
+        string password_hash
+        string profile_picture_url
+        text bio
+        boolean is_public
+        boolean show_online_status
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    USER_PREFERENCES {
+        uuid id PK
+        uuid user_id FK
+        boolean email_notifications
+        boolean push_notifications
+        json preferred_moods
+        timestamp updated_at
+    }
+
+    MEDIA {
+        uuid id PK
+        string external_id
+        string external_source
+        string title
+        string poster_url
+        string type
+        date release_date
+        integer duration_minutes
+        text synopsis
+        decimal avg_rating
+        timestamp last_review_fetch_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    GENRES {
+        uuid id PK
+        string name
+    }
+
+    MEDIA_GENRES {
+        uuid media_id FK
+        uuid genre_id FK
+    }
+
+    REVIEWS {
+        uuid id PK
+        uuid media_id FK
+        string external_review_id
+        string source
+        string author
+        text content
+        decimal score
+        date review_date
+        timestamp fetched_at
+    }
+
+    AI_REVIEW_SUMMARIES {
+        uuid id PK
+        uuid media_id FK
+        text summary_text
+        decimal sentiment_score
+        integer review_count_basis
+        timestamp generated_at
+    }
+
+    MEDIA_PAGE_VIEWS {
+        uuid id PK
+        uuid media_id FK
+        uuid user_id FK
+        timestamp viewed_at
+    }
+
+    COLLECTIONS {
+        uuid id PK
+        uuid user_id FK
+        string name
+        string description
+        string cover_url
+        boolean is_public
+        integer sort_order
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    COLLECTION_ITEMS {
+        uuid id PK
+        uuid collection_id FK
+        uuid media_id FK
+        char user_score
+        text notes
+        timestamp added_at
+    }
+
+    TIER_LISTS {
+        uuid id PK
+        uuid user_id FK
+        string title
+        string description
+        boolean is_public
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    TIER_LIST_ITEMS {
+        uuid id PK
+        uuid tier_list_id FK
+        uuid media_id FK
+        char tier
+        integer position
+        timestamp added_at
+    }
+
+    USER_MEDIA_STATUS {
+        uuid id PK
+        uuid user_id FK
+        uuid media_id FK
+        string watch_status
+        decimal personal_rating
+        integer episodes_watched
+        integer total_episodes
+        integer runtime_watched_mins
+        timestamp last_watched_at
+        timestamp added_at
+    }
+
+    BINGE_SESSIONS {
+        uuid id PK
+        uuid user_id FK
+        integer time_available_mins
+        json selected_moods
+        string genre_filter
+        json candidate_media_ids
+        json ranked_results
+        string llm_model_used
+        integer llm_latency_ms
+        timestamp created_at
+    }
+
+    USERS ||--o{ USER_PREFERENCES : "has"
+    USERS ||--o{ COLLECTIONS : "owns"
+    USERS ||--o{ TIER_LISTS : "creates"
+    USERS ||--o{ USER_MEDIA_STATUS : "tracks"
+    USERS ||--o{ BINGE_SESSIONS : "requests"
+    USERS ||--o{ MEDIA_PAGE_VIEWS : "generates"
+
+    MEDIA ||--o{ MEDIA_GENRES : "tagged with"
+    MEDIA ||--o{ REVIEWS : "receives"
+    MEDIA ||--o| AI_REVIEW_SUMMARIES : "has"
+    MEDIA ||--o{ COLLECTION_ITEMS : "appears in"
+    MEDIA ||--o{ TIER_LIST_ITEMS : "ranked in"
+    MEDIA ||--o{ USER_MEDIA_STATUS : "tracked by"
+    MEDIA ||--o{ MEDIA_PAGE_VIEWS : "viewed via"
+
+    GENRES ||--o{ MEDIA_GENRES : "groups"
+    COLLECTIONS ||--o{ COLLECTION_ITEMS : "contains"
+    TIER_LISTS ||--o{ TIER_LIST_ITEMS : "ranks"
