@@ -24,6 +24,10 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Blastoise Backend is running!' });
 });
 
+app.get('/', (req, res) => {
+  res.send('Blastoise API is running! Access the frontend at http://localhost:3000');
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
