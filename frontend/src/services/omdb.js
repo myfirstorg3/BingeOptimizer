@@ -9,6 +9,14 @@ export async function getMovieById(imdbID) {
   return data;
 }
 
+export async function getMediaDetailsFromBackend(imdbID) {
+  // Try to reach the backend running on port 5000
+  const res = await fetch(`http://localhost:5000/api/media/${imdbID}`);
+  if (!res.ok) throw new Error("Failed to fetch from backend");
+  const data = await res.json();
+  return data; // { media, aiSummary }
+}
+
 export async function searchOMDB(query, page = 1) {
   const res = await fetch(`${BASE}/?apikey=${API_KEY}&s=${encodeURIComponent(query)}&page=${page}`);
   const data = await res.json();

@@ -8,6 +8,7 @@ import Footer  from "./components/Footer";
 import Dashboard  from "./pages/Dashboard";
 import Collection from "./pages/Collection";
 import TierList   from "./pages/TierList";
+import TierListEditor from "./pages/TierListEditor";
 import Search     from "./pages/Search";
 import Settings   from "./pages/Settings";
 import Contact  from "./pages/Contact";
@@ -46,7 +47,8 @@ export default function App() {
         <Routes>
           <Route path="/"           element={<Dashboard />}  />
           <Route path="/collection" element={<Collection />} />
-          <Route path="/tierlist"   element={<TierList />}   />
+          <Route path="/tierlist"      element={<TierList />}       />
+          <Route path="/tierlist/:id"   element={<TierListEditor />} />
           <Route path="/search"     element={<Search />}     />
           <Route path="/settings"   element={<Settings />}   />
           <Route path="/contact"    element={<Contact />}    />

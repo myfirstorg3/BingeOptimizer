@@ -1,235 +1,337 @@
-import { useEffect, useRef, useState } from "react";
-import { gsap } from "gsap";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import anime from "animejs";
-import { TIER_COLORS, TIER_ITEMS_DEFAULT_SEED } from "../data/mockData";
-import { useFetchMedia } from "../hooks/useFetchMedia";
+import { useAuth } from "../context/AuthContext";
 import "./TierList.css";
 
+const API_BASE = "http://localhost:5000";
 const TIERS = ["S", "A", "B", "C", "D"];
+const TIER_COLORS = {
+  S: { bg: "#e94057", label: "#fff" },
+  A: { bg: "#f5840c", label: "#fff" },
+  B: { bg: "#f5c518", label: "#000" },
+  C: { bg: "#00c896", label: "#fff" },
+  D: { bg: "#a78bfa", label: "#fff" },
+};
 
-export default function TierList() {
+async function apiFetch(path, token, opts = {}) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...opts,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(opts.headers || {})
+    }
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export default function TierListGallery() {
+  const navigate = useNavigate();
+  const { user, token } = useAuth();
   const headerRef = useRef(null);
 
-  // ── OMDB: fetch media once ──
-  const { media, loading } = useFetchMedia();
+  const [tierLists, setTierLists]   = useState([]);
+  const [collections, setCollections] = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(null);
 
-  // Build initial tiers from fetched media using seed indices
-  const [tiers, setTiers]             = useState({ S: [], A: [], B: [], C: [], D: [], unranked: [] });
-  const [dragging, setDragging]       = useState(null);
-  const [hoveredTier, setHoveredTier] = useState(null);
-  const [initialized, setInitialized] = useState(false);
+  // Create modal state
+  const [showCreate, setShowCreate] = useState(false);
+  const [createTitle, setCreateTitle]   = useState("");
+  const [createDesc, setCreateDesc]     = useState("");
+  const [createCollId, setCreateCollId] = useState("");
+  const [creating, setCreating]         = useState(false);
+  const [createError, setCreateError]   = useState(null);
 
-  useEffect(() => {
-    if (media.length === 0 || initialized) return;
-    const built = {};
-    for (const [tier, indices] of Object.entries(TIER_ITEMS_DEFAULT_SEED)) {
-      built[tier] = indices.map((i) => media[i]).filter(Boolean);
-    }
-    setTiers(built);
-    setInitialized(true);
-  }, [media, initialized]);
-
-  // Entrance animations — UNCHANGED
+  // Entrance animation
   useEffect(() => {
     anime({
       targets: headerRef.current?.querySelectorAll(".tl-letter"),
-      translateY: [50, 0],
-      opacity:    [0, 1],
-      delay:      anime.stagger(40),
-      duration:   700,
-      easing:     "easeOutExpo",
+      translateY: [50, 0], opacity: [0, 1],
+      delay: anime.stagger(40), duration: 700, easing: "easeOutExpo"
     });
-    gsap.fromTo(".tier-row",
-      { opacity: 0, x: -30 },
-      { opacity: 1, x: 0, stagger: 0.1, duration: 0.6, delay: 0.3, ease: "power3.out" }
-    );
-    gsap.fromTo(".unranked-pool",
-      { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, duration: 0.5, delay: 0.9, ease: "power3.out" }
-    );
   }, []);
 
-  // Drag handlers — UNCHANGED
-  const onDragStart = (e, item, fromTier) => {
-    setDragging({ item, fromTier });
-    e.dataTransfer.effectAllowed = "move";
-    anime({ targets: e.currentTarget, scale: 0.9, opacity: 0.5, duration: 150 });
-  };
-
-  const onDragEnd = (e) => {
-    setDragging(null);
-    setHoveredTier(null);
-    anime({ targets: e.currentTarget, scale: 1, opacity: 1, duration: 200 });
-  };
-
-  const onDrop = (e, toTier) => {
-    e.preventDefault();
-    if (!dragging) return;
-    const { item, fromTier } = dragging;
-    if (fromTier === toTier) return;
-
-    setTiers((prev) => {
-      const next = { ...prev };
-      next[fromTier] = next[fromTier].filter((x) => x.id !== item.id);
-      next[toTier]   = [...next[toTier], item];
-      return next;
+  // Animate cards in
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      anime({
+        targets: ".tl-card",
+        opacity: [0, 1], translateY: [20, 0], scale: [0.97, 1],
+        delay: anime.stagger(60, { start: 100 }), duration: 400, easing: "easeOutQuad"
+      });
     });
-    setHoveredTier(null);
+  }, [tierLists]);
 
-    setTimeout(() => {
-      const row = document.querySelector(`[data-tier="${toTier}"]`);
-      if (row) {
-        anime({
-          targets: row,
-          backgroundColor: [`${TIER_COLORS[toTier]?.glow || "rgba(0,229,255,0.1)"}`, "rgba(0,0,0,0)"],
-          duration: 600,
-          easing: "easeOutQuad",
-        });
-      }
-    }, 50);
+  const load = useCallback(async () => {
+    if (!token) { setLoading(false); return; }
+    setLoading(true);
+    try {
+      const [tls, colls] = await Promise.all([
+        apiFetch("/api/tierlists", token),
+        apiFetch("/api/collections", token)
+      ]);
+      setTierLists(tls);
+      setCollections(colls);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleCreate = async () => {
+    if (!createTitle.trim()) { setCreateError("Title is required"); return; }
+    setCreating(true);
+    setCreateError(null);
+    try {
+      const tl = await apiFetch("/api/tierlists", token, {
+        method: "POST",
+        body: JSON.stringify({
+          title: createTitle.trim(),
+          description: createDesc.trim() || null,
+          collectionId: createCollId || null
+        })
+      });
+      setTierLists(prev => [...prev, tl]);
+      setShowCreate(false);
+      setCreateTitle(""); setCreateDesc(""); setCreateCollId("");
+      navigate(`/tierlist/${tl.id}`);
+    } catch (e) {
+      setCreateError(e.message);
+    } finally {
+      setCreating(false);
+    }
   };
 
-  const removeFromTier = (item, fromTier) => {
-    setTiers((prev) => {
-      const next = { ...prev };
-      next[fromTier] = next[fromTier].filter((x) => x.id !== item.id);
-      next.unranked  = [...next.unranked, item];
-      return next;
-    });
+  const handleDelete = async (e, id) => {
+    e.stopPropagation();
+    if (!confirm("Delete this tier list?")) return;
+    try {
+      await apiFetch(`/api/tierlists/${id}`, token, { method: "DELETE" });
+      setTierLists(prev => prev.filter(t => t.id !== id));
+    } catch {}
   };
 
   const TITLE = "TIER LIST";
+
+  if (!user && !loading) {
+    return (
+      <div className="page tier-page">
+        <div className="noise-overlay" />
+        <div className="coll-login-required">
+          <div className="font-display" style={{ fontSize: 80, color: "var(--text-muted)", marginBottom: 16 }}>🔒</div>
+          <h2 className="font-display" style={{ fontSize: 32, marginBottom: 12 }}>LOGIN REQUIRED</h2>
+          <p className="font-mono text-muted" style={{ fontSize: 12, letterSpacing: "0.1em", marginBottom: 24 }}>
+            Log in to create and manage your tier lists.
+          </p>
+          <a href="/login" className="btn btn--primary">LOG IN</a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page tier-page">
       <div className="noise-overlay" />
 
-      {/* Header — UNCHANGED */}
+      {/* Header */}
       <div ref={headerRef} className="container tl-header">
         <div className="tl-eyebrow">
           <span className="tag tag--pink">RANKING</span>
-          <span className="font-mono text-muted" style={{ fontSize: 11, letterSpacing: "0.14em" }}>DRAG & DROP TO REORDER</span>
+          <span className="font-mono text-muted" style={{ fontSize: 11, letterSpacing: "0.14em" }}>
+            {tierLists.length} TIER LIST{tierLists.length !== 1 ? "S" : ""}
+          </span>
         </div>
-        <h1 className="tl-title font-display" aria-label={TITLE}>
-          {TITLE.split("").map((c, i) => (
-            <span key={i} className={`tl-letter ${c === " " ? "tl-space" : ""}`}>
-              {c === " " ? "\u00A0" : c}
-            </span>
-          ))}
-        </h1>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+          <h1 className="tl-title font-display" aria-label={TITLE}>
+            {TITLE.split("").map((c, i) => (
+              <span key={i} className={`tl-letter ${c === " " ? "tl-space" : ""}`}>
+                {c === " " ? "\u00A0" : c}
+              </span>
+            ))}
+          </h1>
+          <button className="btn btn--primary tl-create-btn" onClick={() => setShowCreate(true)}>
+            + NEW TIER LIST
+          </button>
+        </div>
       </div>
 
-      {/* Tier rows */}
-      <div className="container tl-body">
+      {/* Gallery */}
+      <div className="container tl-gallery">
         {loading ? (
-          <div className="font-mono text-muted" style={{ padding: "60px 0", letterSpacing: "0.12em" }}>
-            LOADING TIER DATA...
+          <div className="coll-loading">
+            <div className="coll-spinner" />
+            <div className="font-mono text-muted" style={{ fontSize: 11, letterSpacing: "0.12em", marginTop: 16 }}>
+              LOADING TIER LISTS...
+            </div>
+          </div>
+        ) : error ? (
+          <div className="no-results">
+            <div className="font-display" style={{ fontSize: 60, color: "var(--pink)" }}>!</div>
+            <p className="font-mono text-muted" style={{ fontSize: 12, letterSpacing: "0.1em" }}>{error}</p>
+          </div>
+        ) : tierLists.length === 0 ? (
+          <div className="no-results">
+            <div className="font-display" style={{ fontSize: 60, color: "var(--text-muted)" }}>∅</div>
+            <p className="font-mono text-muted" style={{ fontSize: 12, letterSpacing: "0.1em" }}>NO TIER LISTS YET</p>
+            <p className="text-muted" style={{ fontSize: 13, marginTop: 8 }}>
+              Create a tier list from a collection or start fresh.
+            </p>
+            <button className="btn btn--primary" style={{ marginTop: 20 }} onClick={() => setShowCreate(true)}>
+              CREATE YOUR FIRST TIER LIST
+            </button>
           </div>
         ) : (
-          <>
-            <div className="tier-list-grid">
-              {TIERS.map((tier) => {
-                const color = TIER_COLORS[tier];
-                return (
-                  <div
-                    key={tier}
-                    data-tier={tier}
-                    className={`tier-row ${hoveredTier === tier ? "tier-row--hovered" : ""}`}
-                    onDragOver={(e) => { e.preventDefault(); setHoveredTier(tier); }}
-                    onDragLeave={() => setHoveredTier(null)}
-                    onDrop={(e) => onDrop(e, tier)}
-                    style={{ "--tier-color": color.bg, "--tier-glow": color.glow }}
-                  >
-                    <div className="tier-label" style={{ background: color.bg }}>
-                      <span className="font-display">{tier}</span>
-                    </div>
-                    <div className="tier-items">
-                      {tiers[tier].map((item) => (
-                        <TierItem
-                          key={item.id}
-                          item={item}
-                          tier={tier}
-                          onDragStart={onDragStart}
-                          onDragEnd={onDragEnd}
-                          onRemove={removeFromTier}
-                        />
-                      ))}
-                      {tiers[tier].length === 0 && (
-                        <div className="tier-empty font-mono">DROP HERE</div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Unranked pool — UNCHANGED */}
-            <div
-              className={`unranked-pool glass ${hoveredTier === "unranked" ? "unranked-pool--hovered" : ""}`}
-              onDragOver={(e) => { e.preventDefault(); setHoveredTier("unranked"); }}
-              onDragLeave={() => setHoveredTier(null)}
-              onDrop={(e) => onDrop(e, "unranked")}
-            >
-              <div className="unranked-header">
-                <span className="font-mono text-muted" style={{ fontSize: 10, letterSpacing: "0.16em" }}>UNRANKED POOL</span>
-                <span className="font-mono text-muted" style={{ fontSize: 10 }}>{tiers.unranked.length} ITEMS</span>
-              </div>
-              <div className="unranked-items">
-                {tiers.unranked.map((item) => (
-                  <TierItem
-                    key={item.id}
-                    item={item}
-                    tier="unranked"
-                    onDragStart={onDragStart}
-                    onDragEnd={onDragEnd}
-                    onRemove={() => {}}
-                    unranked
-                  />
-                ))}
-                {tiers.unranked.length === 0 && (
-                  <div className="tier-empty font-mono">ALL RANKED ✓</div>
-                )}
-              </div>
-            </div>
-          </>
+          <div className="tl-card-grid">
+            {tierLists.map(tl => (
+              <TierListCard key={tl.id} tl={tl} onClick={() => navigate(`/tierlist/${tl.id}`)} onDelete={handleDelete} />
+            ))}
+          </div>
         )}
       </div>
+
+      {/* Create Modal */}
+      {showCreate && (
+        <div className="coll-modal-overlay" onClick={() => setShowCreate(false)}>
+          <div className="coll-modal glass" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowCreate(false)}>×</button>
+            <h3 className="font-display" style={{ fontSize: 22, marginBottom: 20 }}>NEW TIER LIST</h3>
+
+            <label className="coll-label font-mono">TITLE *</label>
+            <input
+              className="coll-input"
+              type="text"
+              placeholder="e.g. All-Time Favourites"
+              value={createTitle}
+              onChange={e => setCreateTitle(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleCreate()}
+              autoFocus
+            />
+
+            <label className="coll-label font-mono" style={{ marginTop: 14 }}>DESCRIPTION</label>
+            <input
+              className="coll-input"
+              type="text"
+              placeholder="Optional description..."
+              value={createDesc}
+              onChange={e => setCreateDesc(e.target.value)}
+            />
+
+            <label className="coll-label font-mono" style={{ marginTop: 14 }}>SEED FROM COLLECTION (optional)</label>
+            <select
+              className="coll-input"
+              value={createCollId}
+              onChange={e => setCreateCollId(e.target.value)}
+              style={{ cursor: "pointer" }}
+            >
+              <option value="">— Start Empty —</option>
+              {collections.map(c => (
+                <option key={c.id} value={c.id}>{c.name} ({c.items?.length || 0} items)</option>
+              ))}
+            </select>
+
+            {createError && (
+              <div className="font-mono" style={{ color: "#ff4d6d", fontSize: 11, marginTop: 8 }}>{createError}</div>
+            )}
+
+            <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+              <button className="btn btn--primary" style={{ flex: 1 }} onClick={handleCreate} disabled={creating}>
+                {creating ? "CREATING..." : "CREATE & OPEN"}
+              </button>
+              <button className="btn btn--ghost" onClick={() => setShowCreate(false)}>CANCEL</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// TierItem — UNCHANGED except poster fallback
-function TierItem({ item, tier, onDragStart, onDragEnd, onRemove, unranked }) {
-  const ref = useRef(null);
-  const FALLBACK_POSTER = "https://via.placeholder.com/80x120/0a0a0f/00e5ff?text=?";
+// ─── Tier List Card ──────────────────────────────────────────────
+function TierListCard({ tl, onClick, onDelete }) {
+  const cardRef = useRef(null);
+  const preview = tl.items?.slice(0, 8) || [];
+  const ranked  = tl.items?.filter(i => i.tier && i.tier !== "unranked") || [];
 
-  const handleMouseEnter = () => anime({ targets: ref.current, scale: 1.05, duration: 200, easing: "easeOutQuad" });
-  const handleMouseLeave = () => anime({ targets: ref.current, scale: 1,    duration: 200, easing: "easeOutQuad" });
+  // Get a mini-preview of the tier distribution
+  const tierCounts = TIERS.reduce((acc, t) => {
+    acc[t] = tl.items?.filter(i => i.tier === t).length || 0;
+    return acc;
+  }, {});
+
+  const handleMouse = (e) => {
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    anime({ targets: cardRef.current, rotateY: x * 6, rotateX: -y * 6, duration: 200, easing: "easeOutQuad" });
+  };
+  const handleMouseLeave = () => {
+    anime({ targets: cardRef.current, rotateY: 0, rotateX: 0, duration: 400, easing: "easeOutElastic(1, 0.6)" });
+  };
 
   return (
     <div
-      ref={ref}
-      className="tier-item"
-      draggable
-      onDragStart={(e) => onDragStart(e, item, tier)}
-      onDragEnd={onDragEnd}
-      onMouseEnter={handleMouseEnter}
+      ref={cardRef}
+      className="tl-card glass"
+      onClick={onClick}
+      onMouseMove={handleMouse}
       onMouseLeave={handleMouseLeave}
-      title={item.title}
+      style={{ transformStyle: "preserve-3d", perspective: "800px", cursor: "pointer" }}
     >
-      <img
-        src={item.poster || FALLBACK_POSTER}
-        alt={item.title}
-        className="tier-item__img"
-        onError={(e) => { e.target.src = FALLBACK_POSTER; }}
-      />
-      <div className="tier-item__tooltip">
-        <div className="font-ui" style={{ fontWeight: 700, fontSize: 12 }}>{item.title}</div>
-        <div className="font-mono" style={{ fontSize: 10, color: "var(--text-muted)" }}>{item.year} · ★ {item.rating}</div>
+      {/* Poster strip preview */}
+      <div className="tl-card-preview">
+        {preview.length > 0 ? (
+          <div className="tl-card-posters">
+            {preview.map((item, i) => (
+              <div key={item.id} className="tl-card-poster-wrap" style={{ zIndex: preview.length - i }}>
+                <img
+                  src={item.media?.posterUrl || "https://via.placeholder.com/80x120/0a0a0f/00e5ff?text=?"}
+                  alt={item.media?.title}
+                  className="tl-card-poster"
+                  onError={e => { e.target.src = "https://via.placeholder.com/80x120/0a0a0f/00e5ff?text=?"; }}
+                />
+                {item.tier && item.tier !== "unranked" && (
+                  <div className="tl-card-tier-badge" style={{ background: TIER_COLORS[item.tier]?.bg, color: TIER_COLORS[item.tier]?.label }}>
+                    {item.tier}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="tl-card-empty-preview font-mono text-muted">EMPTY</div>
+        )}
+
+        {/* Mini tier bar */}
+        {ranked.length > 0 && (
+          <div className="tl-card-tier-bar">
+            {TIERS.map(t => tierCounts[t] > 0 && (
+              <div key={t} className="tl-card-tier-seg" style={{ background: TIER_COLORS[t].bg, flex: tierCounts[t] }} title={`${t}: ${tierCounts[t]}`} />
+            ))}
+          </div>
+        )}
       </div>
-      {!unranked && (
-        <button className="tier-item__remove" onClick={() => onRemove(item, tier)} title="Remove">×</button>
-      )}
+
+      {/* Info */}
+      <div className="tl-card-info">
+        <div className="tl-card-title">{tl.title}</div>
+        {tl.description && <div className="tl-card-desc text-muted">{tl.description}</div>}
+        <div className="tl-card-meta font-mono">
+          <span>{tl.items?.length || 0} ITEMS</span>
+          {tl.collection && <span className="tl-card-coll-tag">📁 {tl.collection.name}</span>}
+          <span style={{ color: "var(--text-muted)" }}>{new Date(tl.createdAt).toLocaleDateString()}</span>
+        </div>
+      </div>
+
+      <button className="tl-card-delete" onClick={e => onDelete(e, tl.id)} title="Delete">🗑</button>
     </div>
   );
 }

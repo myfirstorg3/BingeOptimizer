@@ -331,3 +331,50 @@
   .stats-grid  { grid-template-columns: repeat(2, 1fr); }
   .recs-grid   { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── Binge-specific ── */
+.binge-score-chip {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0,0,0,0.75);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.binge-ai-blurb {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.binge-session-note {
+  padding: 16px 20px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(0,229,255,0.15);
+  background: rgba(0,229,255,0.04);
+  margin-bottom: 24px;
+}
+
+/* Pulsing AI dot */
+.binge-ai-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  animation: binge-pulse 1s ease-in-out infinite;
+}
+@keyframes binge-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.7); }
+}
+

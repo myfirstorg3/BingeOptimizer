@@ -242,5 +242,389 @@
 
 @media (max-width: 768px) {
   .coll-grid { grid-template-columns: repeat(2, 1fr); }
-  .coll-header-top { flex-direction: column; align-items: flex-start; }
+  .coll-header-top { flex-direction: column; align-items: flex-start; gap: 16px; }
 }
+
+/* ── Collection Tabs ── */
+.coll-tabs {
+  display: flex;
+  gap: 6px;
+  margin-top: 24px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.coll-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  border: 1px solid transparent;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: all 0.2s;
+  position: relative;
+  bottom: -1px;
+}
+.coll-tab:hover { color: var(--text-secondary); background: rgba(255,255,255,0.03); }
+.coll-tab.active {
+  color: var(--cyan);
+  border-color: var(--border-bright) var(--border-bright) var(--surface-2);
+  background: var(--surface-2);
+  border-bottom-color: var(--surface-2);
+}
+.coll-tab-count {
+  background: rgba(255,255,255,0.08);
+  border-radius: 100px;
+  padding: 1px 7px;
+  font-size: 9px;
+  color: inherit;
+}
+.coll-tab.active .coll-tab-count {
+  background: var(--cyan-dim);
+  color: var(--cyan);
+}
+
+.coll-tab-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  margin-left: auto;
+}
+
+/* ── Create button ── */
+.coll-create-btn {
+  font-size: 10px;
+  padding: 7px 16px;
+  letter-spacing: 0.1em;
+}
+
+/* ── Spinner ── */
+.coll-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80px 0;
+}
+.coll-spinner {
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--border);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Card rating badge ── */
+.coll-rating-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0,0,0,0.8);
+  border: 1px solid rgba(245,197,24,0.4);
+  color: #f5c518;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+/* ── Remove buttons ── */
+.coll-remove-btn {
+  background: rgba(255,45,107,0.08);
+  border: 1px solid rgba(255,45,107,0.15);
+  color: var(--text-muted);
+  font-size: 11px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+.coll-remove-btn:hover { background: rgba(255,45,107,0.2); color: #ff4d6d; border-color: rgba(255,45,107,0.4); }
+
+.coll-remove-grid-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,45,107,0.2);
+  color: var(--text-muted);
+  font-size: 10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0;
+  pointer-events: none;
+}
+.media-card:hover .coll-remove-grid-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+.coll-remove-grid-btn:hover { background: rgba(255,45,107,0.5); color: #fff; }
+
+/* ── Create Collection Modal ── */
+.coll-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+}
+.coll-modal {
+  position: relative;
+  width: 90%;
+  max-width: 440px;
+  padding: 40px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border-bright);
+  background: rgba(10,10,20,0.95);
+}
+.coll-label {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.coll-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+.coll-input:focus { border-color: var(--cyan-mid); box-shadow: 0 0 0 2px var(--cyan-dim); }
+
+/* ── Login required ── */
+.coll-login-required {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+  padding: 40px;
+}
+
+/* ═══════════════════════════════════════════════
+   COLLECTION BUCKET CARDS (new card navigation)
+═══════════════════════════════════════════════ */
+.coll-bucket-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 8px 0 24px;
+}
+
+.coll-bucket-card {
+  width: 200px;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+  flex-shrink: 0;
+}
+.coll-bucket-card:hover {
+  border-color: var(--border-bright);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.coll-bucket-card--active {
+  border-color: var(--cyan-mid) !important;
+  box-shadow: 0 0 20px rgba(0,229,255,0.12) !important;
+}
+
+/* Poster strip */
+.coll-bucket-posters {
+  height: 110px;
+  background: var(--surface-1);
+  display: flex;
+  align-items: flex-end;
+  padding: 10px;
+  overflow: hidden;
+  position: relative;
+}
+.coll-bucket-poster {
+  width: 56px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: -3px 0 10px rgba(0,0,0,0.5);
+  position: relative;
+  flex-shrink: 0;
+}
+.coll-bucket-empty {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  width: 100%;
+  text-align: center;
+}
+
+/* Card info */
+.coll-bucket-info {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.coll-bucket-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.coll-bucket-stats {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+/* Active underline */
+.coll-bucket-active-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--pink));
+}
+
+/* ═══════════════════════════════════════════════
+   SECTION HEADER (replaces old tab bar)
+═══════════════════════════════════════════════ */
+.coll-section-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0 8px;
+  flex-wrap: wrap;
+}
+.coll-section-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+  min-width: 20px;
+}
+
+/* ═══════════════════════════════════════════════
+   STATUS SECTIONS
+═══════════════════════════════════════════════ */
+.coll-status-section {
+  margin-bottom: 36px;
+}
+.coll-status-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ═══════════════════════════════════════════════
+   STATUS BADGE (on grid card)
+═══════════════════════════════════════════════ */
+.coll-status-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  cursor: pointer;
+  z-index: 4;
+  transition: transform 0.15s;
+}
+.coll-status-badge:hover { transform: scale(1.15); }
+
+/* ═══════════════════════════════════════════════
+   STATUS MENU DROPDOWN
+═══════════════════════════════════════════════ */
+.coll-status-menu {
+  position: absolute;
+  top: 36px;
+  left: 8px;
+  z-index: 20;
+  border-radius: 8px;
+  border: 1px solid var(--border-bright);
+  background: rgba(10,10,20,0.96);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 140px;
+}
+.coll-status-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+.coll-status-menu-item:hover,
+.coll-status-menu-item.active {
+  background: rgba(255,255,255,0.06);
+  color: var(--status-color);
+}
+
+/* Status button in list view */
+.coll-status-btn-wrap { position: relative; }
+.coll-status-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  background: transparent;
+  transition: opacity 0.2s;
+}
+.coll-status-btn:hover { opacity: 0.75; }
+
+
