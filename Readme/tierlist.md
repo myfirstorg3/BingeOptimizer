@@ -1,25 +1,50 @@
-# 🏆 Tier Lists
+# 🏆 Tier Lists Documentation
 
-The Tier List feature allows users to rank movies and TV shows from their collections into highly visual, customizable tiers (S, A, B, C, D).
+The Tier List feature allows users to rank media into highly visual, customizable tiers. This document covers the exact backend structure and state management logic used to handle drag-and-drop sorting.
 
-## 🛠️ How it Works
+## 🛠️ Database Implementation (`tierListController.js`)
 
-### Database Structure
-The feature relies on two main tables:
-1. `TierList`: Represents the list itself (e.g., "My Favorite Sci-Fi Movies"). It belongs to a `User` and optionally links to a base `Collection`.
-2. `TierListItem`: The join table. It connects a `TierList` to a `Media` item. 
-   - Crucially, it stores two extra fields: `tier` (String, e.g., "S", "A") and `position` (Integer, tracking the order within that tier).
+Tier Lists rely on two Prisma models: `TierList` and `TierListItem`.
 
-### The UI / Drag & Drop
-The frontend utilizes a Drag and Drop interface (typically implemented via libraries like `react-beautiful-dnd` or `@hello-pangea/dnd`, or custom mouse-event logic).
+### 1. Initialization (Seeding from a Collection)
+When a user creates a new Tier List and selects an existing Collection as the base, the `POST /api/tierlists` endpoint seeds the database:
+- It fetches all `mediaId`s from the chosen `CollectionItem` table.
+- It bulk-inserts them into `TierListItem` with `tier: 'unranked'` and `position: idx`.
 
-When a user drags a movie from the "Unranked" pool into the "S Tier":
-1. **Optimistic UI Update:** React immediately updates the local state, moving the image to the new tier so the application feels instant.
-2. **API Call:** A `PATCH` request is sent to the backend with the `mediaId` and the new `tier`.
-3. **Database Update:** The backend updates the `TierListItem` row with the new tier string.
+### 2. Saving State (The Bulk Replace Strategy)
+Handling drag-and-drop updates row-by-row can lead to complex race conditions and position tracking bugs (e.g., swapping item A at position 2 with item B at position 3). 
+
+Instead, Blastoise uses a **Bulk Replace Strategy** in the `saveTierItems` endpoint (`POST /api/tierlists/:id/items`):
+
+```javascript
+// Step 1: Nuke the current state for this Tier List
+await prisma.tierListItem.deleteMany({ where: { tierListId: tlId } });
+
+// Step 2: Re-insert the exact new state sent from the React frontend
+await prisma.tierListItem.createMany({
+  data: items.map((item, idx) => ({
+    tierListId: tlId,
+    mediaId: item.mediaId,
+    tier: item.tier || 'unranked',
+    position: item.position ?? idx // Exact array index becomes the new DB position
+  }))
+});
+```
+**Why this works:** It offloads the complex sorting logic entirely to the React frontend. The backend acts as a dumb data store that simply persists whatever the frontend says is the current state.
+
+## 🖱️ Frontend State Management
+
+While dragging and dropping, the React frontend maintains the source of truth using a dictionary mapping tiers to arrays of media items.
+
+### The Flow:
+1. **Initial Load:** 
+   The frontend hits `GET /api/tierlists/:id`. The backend sorts the items via Prisma (`orderBy: { position: 'asc' }`) before returning them.
+2. **Dragging:**
+   When an item is dragged from `unranked` to `S Tier`:
+   - React immediately splices the item out of the `unranked` array and into the `S` array at the dropped index.
+   - The UI updates instantly (Optimistic UI).
+3. **Saving:**
+   When the user clicks "Save", the frontend flattens the dictionary into a single array, iterating through each tier's array and appending a `tier` and `position` property to each item. This array is sent in the payload to `saveTierItems`.
 
 ## 💡 Interview Talking Points
-
-- **Managing State:** Discuss how complex state is managed in React. You have an array of tiers, and each tier contains an array of items. Dragging an item involves removing it from the source array and inserting it into the destination array at the specific index.
-- **Position Tracking:** Ask the interviewer how they would handle ordering. If a user rearranges items within the "S Tier", we update the `position` integer in the database. When fetching the tier list, the backend sorts the `TierListItem` array by `position ASC` before sending it to the frontend.
-- **Visuals:** The tier lists use a distinct, vibrant color mapping (S: Red/Pink, A: Orange, B: Yellow, C: Green, D: Purple) to create a premium, gamified aesthetic.
+- **Bulk Replace vs. Individual Row Updates:** Be prepared to defend the bulk replace strategy. While it seems destructive to delete and recreate rows, it is atomic (if wrapped in a transaction) and drastically simpler than managing linked lists or fractional indexing for sorting. For lists with <500 items, `deleteMany` + `createMany` is extremely fast in SQLite/Postgres.

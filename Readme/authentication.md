@@ -1,40 +1,59 @@
-# 🔒 Authentication & Security
+# 🔒 Authentication & Security Documentation
 
-This document covers how user authentication is handled in Blastoise. Security and session management are extremely common interview topics.
+This document covers the exact implementation details of how user authentication is handled in Blastoise.
 
-## 🛠️ The Tech Stack
-- **Method:** JSON Web Tokens (JWT)
-- **Storage:** Frontend LocalStorage / React Context
-- **Passwords:** Hashed using `bcrypt`
+## 🛠️ The Implementation Flow
 
-## 🔄 The Authentication Flow
+### 1. Token Generation (Login/Signup)
+When a user logs in, the backend uses `bcrypt.compare()` to verify the hashed password. If successful, it generates a JWT containing the user's `id`.
 
-### 1. Registration
-When a user signs up:
-1. The frontend sends the `email`, `username`, and `password` to the backend.
-2. The backend uses `bcrypt` to generate a salt and hash the password. **We never store plaintext passwords in the database.**
-3. The new user is saved to the `User` table.
-4. A JWT is generated and sent back to the client.
+```javascript
+// Example from authController.js
+const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+```
 
-### 2. Login & Token Generation
-When a user logs in:
-1. The backend finds the user by email.
-2. It uses `bcrypt.compare()` to check if the provided password matches the stored hash.
-3. If successful, it creates a JWT. The JWT payload typically contains the `userId` and `username`.
-4. The token is signed using a secret key (`JWT_SECRET` in `.env`).
+### 2. The Middleware (`authMiddleware.js`)
+Blastoise uses custom Express middleware to protect routes. When the frontend makes an authenticated request, it must include the token in the headers:
+`Authorization: Bearer <token>`
 
-### 3. Making Authenticated Requests
-- The frontend stores the token (usually in `localStorage`).
-- For any protected route (like adding a movie to a collection), the frontend attaches the token to the HTTP header:
-  `Authorization: Bearer <token>`
-- The backend has an `authMiddleware.js` function. It intercepts the request, verifies the token's signature using the secret key, and extracts the `userId`.
-- It then attaches the user object to the request (`req.user = user`) and calls `next()`, allowing the controller to proceed.
+The backend exposes two middleware functions:
+
+#### A. Strict Protection (`protect`)
+Used for routes that require a logged-in user (e.g., `POST /api/collections`).
+```javascript
+export const protect = async (req, res, next) => {
+  if (req.headers.authorization?.startsWith('Bearer')) {
+    try {
+      // 1. Extract token
+      const token = req.headers.authorization.split(' ')[1];
+      
+      // 2. Cryptographically verify signature using the secret key
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      // 3. Look up user by the decoded ID and attach to the request object
+      req.user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        select: { id: true, username: true, email: true } // Exclude passwordHash!
+      });
+
+      next(); // Proceed to controller
+    } catch (error) {
+      res.status(401).json({ message: 'Not authorized, token failed' });
+    }
+  } else {
+    res.status(401).json({ message: 'Not authorized, no token' });
+  }
+};
+```
+
+#### B. Optional Protection (`optionalProtect`)
+Used for routes that change behavior based on login status (e.g., fetching a public profile, which might show extra details if the requesting user is logged in).
+It follows the same extraction logic, but if the token is missing or invalid, it simply runs `next()` without setting `req.user`, and does *not* throw a 401 Error.
 
 ## 💡 Interview Questions & Talking Points
 
 **Q: Why use JWTs instead of traditional session cookies?**
-**A:** JWTs are stateless. The backend doesn't need to store a session ID in the database or Redis memory. To verify a user, it just cryptographically verifies the token signature. This makes the backend highly scalable, as any server instance can verify the token without looking up session state.
+**A:** JWTs are stateless. The backend doesn't need to query a Redis session store to verify a user. It just performs a fast cryptographic signature check (`jwt.verify()`). This makes horizontal scaling much easier, as any server instance can verify the token.
 
-**Q: What is a security risk of storing JWTs in `localStorage`?**
-**A:** Cross-Site Scripting (XSS). If an attacker injects malicious JavaScript into the app, they can read `localStorage` and steal the token. 
-*(Note: A more secure, enterprise-level alternative is storing the token in an `httpOnly` cookie, which JavaScript cannot read, preventing XSS theft. For an MVP like Blastoise, `localStorage` is standard practice).*
+**Q: In your middleware, you query the database `prisma.user.findUnique` after verifying the JWT. Isn't the point of JWT to avoid database lookups?**
+**A:** Yes, strictly speaking, a pure stateless JWT shouldn't require a DB lookup. However, doing a lookup ensures the user still exists in the database (e.g., they haven't been banned or deleted since the token was issued). It's a calculated trade-off between strict statelessness and security/data freshness. We mitigate the performance hit by using Prisma's `select` to only fetch the `id`, `username`, and `email`, avoiding the massive `User` payload.

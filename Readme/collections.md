@@ -1,37 +1,59 @@
-# 📚 Collections & Media Caching
+# 📚 Collections & Media Caching Documentation
 
-The Collections feature allows users to curate their personal libraries, track what they are watching, and view rich media details. It is heavily optimized to reduce reliance on external APIs.
+The Collections feature allows users to curate their personal libraries. It is built around a heavy optimization pattern: the **Database-First Caching Strategy**.
 
-## 🗄️ The Database-First Caching Strategy
+## 🗄️ The Database-First Caching Strategy (`mediaController.js`)
 
-External APIs (like OMDB or TMDB) have rate limits and network latency. Blastoise uses a **Database-First Caching Strategy**.
+External APIs (like OMDB) have rate limits and network latency. Blastoise avoids hitting them whenever possible.
 
-### The Flow:
-1. **Searching:** When a user searches for a movie, the frontend hits the OMDB API directly to get a lightweight list of search results.
-2. **Adding to Collection:** When the user clicks "Add to Collection":
-   - The backend checks if that `imdbId` exists in the local `Media` table.
-   - If **NO**: The backend fetches the full, rich data (plot, actors, runtime) from OMDB, saves it to the local SQLite `Media` table, and then links it to the user's collection.
-   - If **YES**: The backend skips OMDB entirely and just links the existing local record to the user's collection.
-3. **Viewing Collections:** When the user opens their Collections page, **zero external API calls are made**. All posters, titles, runtimes, and statuses are loaded instantly from the local database.
+### Example: Adding to Collection (`addToCollection` endpoint)
+When a user clicks "Add to Collection" on a movie with a specific `imdbId`:
 
-## 🤖 Background AI Review Generation
+```javascript
+// 1. Check local DB first
+let media = await prisma.media.findFirst({ where: { externalId: imdbId } });
 
-To make Collections feel premium, Blastoise automatically generates a "Critic Consensus" review using Gemini AI for every movie added.
+// 2. Fetch from OMDB *only* if not found locally
+if (!media) {
+  const result = await fetchMediaByIdFromAPI(imdbId);
+  media = result.media; // Saved to local DB inside this service function
+}
 
-**How it works without slowing down the app:**
-- When a user adds a movie, the server responds immediately (`res.status(201)`) so the UI feels snappy.
-- However, *after* the response is sent, a background Promise continues running (`generateReviewSummary()`).
-- This background task calls Gemini, asks it to generate a synthetic review and a sentiment score (1-10) based on the movie's plot, and saves it to the `AIReviewSummary` table.
+// 3. Upsert the item into the user's collection
+const item = await prisma.collectionItem.upsert({
+  where: { collectionId_mediaId: { collectionId, mediaId: media.id } },
+  update: {}, // Do nothing if it already exists
+  create: { collectionId, mediaId: media.id }
+});
+```
 
-## 📺 The Media Detail Panel
+Because of step 1, if 500 users add "The Matrix" to their collections, Blastoise only hits the OMDB API exactly **one** time. The other 499 times, it is served entirely from the local SQLite database.
 
-When a user clicks a movie in their collection, a glassmorphic sliding panel opens. 
-- The frontend hits the `/api/media/internal/:id` endpoint.
-- Because of our caching strategy, this endpoint queries the database and returns the full OMDB metadata and the Gemini AI Review instantly.
-- **Polling:** If the user opens the panel while the background Gemini AI task is still running, the frontend receives a `generatingAI: true` flag. The UI will show a pulsing "Generating AI Review..." animation and silently poll the server every 3 seconds until the review is ready to be displayed.
+## 🤖 Non-Blocking AI Generation
+
+To make Collections feel premium, Blastoise automatically generates a "Critic Consensus" review using Gemini AI for every movie. LLM API calls are inherently slow (often taking 2-4 seconds).
+
+**The Architectural Solution:** We do *not* make the user wait for Gemini to finish before returning a success response.
+
+```javascript
+// 1. Send the HTTP 201 Created response immediately
+res.status(201).json({ item, collection });
+
+// 2. Fire the background AI task (Notice there is no 'await' here)
+const existingSummary = await prisma.aIReviewSummary.findFirst({ where: { mediaId: media.id } });
+if (!existingSummary) {
+  generateReviewSummary(media.id, media.title, media.synopsis)
+    .catch(err => console.error('Background AI generation failed:', err.message));
+}
+```
+
+### The Polling mechanism (`getMediaByInternalId`)
+When the user clicks the movie to view details, the frontend requests data.
+If the backend sees that the AI review doesn't exist yet, it returns `generatingAI: true`. 
+The React frontend then shows a pulsing "Generating..." UI and silently polls the `GET /api/media/internal/:id/ai-summary` endpoint every 3 seconds until the review is ready, creating a seamless user experience.
 
 ## 📊 Status Tracking
 
-Users can track media through a `UserMediaStatus` join table. 
+Users track media through the `UserMediaStatus` join table. 
 - **Statuses:** "unwatched" (Queue), "watching", "completed".
-- This table relies on a composite unique key `@@unique([userId, mediaId])`, ensuring a user can only have one status for a specific movie at a time.
+- **Implementation:** The `updateItemStatus` endpoint uses Prisma's `upsert` method combined with a composite unique key (`@@unique([userId, mediaId])`). This ensures that no matter how fast a user clicks the status button, they can never create duplicate status rows in the database.
