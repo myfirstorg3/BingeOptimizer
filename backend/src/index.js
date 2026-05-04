@@ -14,6 +14,7 @@ import collectionRoutes from './routes/collectionRoutes.js';
 import mediaRoutes from './routes/mediaRoutes.js';
 import tierListRoutes from './routes/tierListRoutes.js';
 import bingeRoutes from './routes/bingeRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 app.use(cors());
 app.use(express.json());
@@ -24,6 +25,7 @@ app.use('/api/collections', collectionRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/tierlists', tierListRoutes);
 app.use('/api/binge', bingeRoutes);
+app.use('/api/users', userRoutes);
 
 // Health Check
 app.get('/api/health', (req, res) => {

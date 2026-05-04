@@ -120,6 +120,20 @@ export default function TierListGallery() {
     } catch {}
   };
 
+  const handleTogglePublic = async (e, id, currentIsPublic) => {
+    e.stopPropagation();
+    const newVal = !currentIsPublic;
+    setTierLists(prev => prev.map(t => t.id === id ? { ...t, isPublic: newVal } : t));
+    try {
+      await apiFetch(`/api/tierlists/${id}`, token, {
+        method: "PATCH",
+        body: JSON.stringify({ isPublic: newVal })
+      });
+    } catch {
+      setTierLists(prev => prev.map(t => t.id === id ? { ...t, isPublic: currentIsPublic } : t));
+    }
+  };
+
   const TITLE = "TIER LIST";
 
   if (!user && !loading) {
@@ -192,7 +206,7 @@ export default function TierListGallery() {
         ) : (
           <div className="tl-card-grid">
             {tierLists.map(tl => (
-              <TierListCard key={tl.id} tl={tl} onClick={() => navigate(`/tierlist/${tl.id}`)} onDelete={handleDelete} />
+              <TierListCard key={tl.id} tl={tl} onClick={() => navigate(`/tierlist/${tl.id}`)} onDelete={handleDelete} onTogglePublic={handleTogglePublic} />
             ))}
           </div>
         )}
@@ -256,7 +270,7 @@ export default function TierListGallery() {
 }
 
 // ─── Tier List Card ──────────────────────────────────────────────
-function TierListCard({ tl, onClick, onDelete }) {
+function TierListCard({ tl, onClick, onDelete, onTogglePublic }) {
   const cardRef = useRef(null);
   const preview = tl.items?.slice(0, 8) || [];
   const ranked  = tl.items?.filter(i => i.tier && i.tier !== "unranked") || [];
@@ -329,6 +343,13 @@ function TierListCard({ tl, onClick, onDelete }) {
           {tl.collection && <span className="tl-card-coll-tag">📁 {tl.collection.name}</span>}
           <span style={{ color: "var(--text-muted)" }}>{new Date(tl.createdAt).toLocaleDateString()}</span>
         </div>
+        <button
+          className={`coll-public-toggle ${tl.isPublic ? "coll-public-toggle--on" : ""}`}
+          onClick={(e) => onTogglePublic(e, tl.id, tl.isPublic)}
+          title={tl.isPublic ? "Public — click to make private" : "Private — click to make public"}
+        >
+          {tl.isPublic ? "🌐 PUBLIC" : "🔒 PRIVATE"}
+        </button>
       </div>
 
       <button className="tl-card-delete" onClick={e => onDelete(e, tl.id)} title="Delete">🗑</button>

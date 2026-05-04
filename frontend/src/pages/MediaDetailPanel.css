@@ -1,0 +1,268 @@
+/* ── Media Detail Panel (IMDB-style side panel) ── */
+.mdp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+  z-index: 200;
+}
+
+.mdp-panel {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: min(680px, 95vw);
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  background: rgba(8, 8, 18, 0.97);
+  border-left: 1px solid var(--border-bright);
+  overflow: hidden;
+}
+
+/* Backdrop art */
+.mdp-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 280px;
+  background-size: cover;
+  background-position: center top;
+  filter: blur(2px) saturate(1.4) brightness(0.35);
+  z-index: 0;
+}
+.mdp-backdrop-fade {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 320px;
+  background: linear-gradient(to bottom, transparent 30%, rgba(8,8,18,1) 100%);
+  z-index: 1;
+}
+
+/* Close button */
+.mdp-close {
+  position: absolute;
+  top: 20px; right: 20px;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-bright);
+  background: rgba(0,0,0,0.6);
+  color: var(--text-secondary);
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10;
+  transition: all 0.2s;
+  cursor: none;
+}
+.mdp-close:hover { color: var(--pink); border-color: var(--pink-mid); background: var(--pink-dim); }
+
+/* Scroll container */
+.mdp-scroll {
+  position: relative;
+  z-index: 2;
+  overflow-y: auto;
+  flex: 1;
+  padding: 32px 36px 60px;
+}
+.mdp-scroll::-webkit-scrollbar { width: 3px; }
+.mdp-scroll::-webkit-scrollbar-track { background: transparent; }
+.mdp-scroll::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 2px; }
+
+/* Header block */
+.mdp-header {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  padding-top: 160px; /* push below backdrop */
+}
+
+.mdp-poster {
+  width: 130px;
+  flex-shrink: 0;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-bright);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+}
+
+.mdp-header-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mdp-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.mdp-title {
+  font-size: clamp(24px, 5vw, 38px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+
+.mdp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+.mdp-meta span::before { content: "·"; margin-right: 12px; }
+.mdp-meta span:first-child::before { content: ""; margin: 0; }
+
+/* Ratings */
+.mdp-ratings {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.mdp-rating-block { display: flex; flex-direction: column; gap: 2px; }
+.mdp-rating-val { font-size: 18px; font-weight: 700; font-family: var(--font-mono); }
+.mdp-rating-src { font-size: 9px; letter-spacing: 0.12em; color: var(--text-muted); }
+
+/* Crew */
+.mdp-crew {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.mdp-crew-label {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--text-muted);
+  min-width: 32px;
+  flex-shrink: 0;
+}
+.mdp-crew-val { font-size: 13px; color: var(--text-secondary); }
+
+/* Divider */
+.mdp-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 28px 0;
+}
+
+/* Sections */
+.mdp-section { margin-bottom: 28px; }
+.mdp-section-label {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mdp-synopsis {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+/* Gemini AI Review */
+.mdp-ai-generating {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: rgba(0,229,255,0.03);
+}
+.mdp-ai-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--cyan);
+  animation: ai-pulse 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes ai-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.6)} }
+
+.mdp-ai-review {
+  border-radius: var(--r-md);
+  border: 1px solid rgba(0,229,255,0.12);
+  background: rgba(0,229,255,0.03);
+  overflow: hidden;
+}
+
+.mdp-sentiment-bar {
+  height: 32px;
+  background: rgba(0,0,0,0.3);
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+.mdp-sentiment-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  transition: width 1.2s cubic-bezier(0.16,1,0.3,1);
+  opacity: 0.4;
+}
+.mdp-sentiment-label {
+  position: relative;
+  z-index: 1;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  padding: 0 14px;
+  font-weight: 700;
+}
+
+.mdp-ai-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  font-style: italic;
+  padding: 18px 20px;
+  border-left: 2px solid var(--cyan-mid);
+  margin: 0;
+}
+
+.mdp-ai-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* Details grid */
+.mdp-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.mdp-detail-item--wide { grid-column: 1 / -1; }
+.mdp-detail-label {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.mdp-detail-val { font-size: 13px; color: var(--text-secondary); }
+
+/* Public toggle */
+.coll-public-toggle {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  padding: 4px 10px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  transition: all 0.2s;
+  cursor: none;
+  margin-top: 4px;
+  align-self: flex-start;
+}
+.coll-public-toggle:hover { border-color: var(--border-bright); color: var(--text-secondary); }
+.coll-public-toggle--on { color: var(--green); border-color: rgba(0,255,136,0.3); background: rgba(0,255,136,0.05); }
+
+@media (max-width: 600px) {
+  .mdp-header { flex-direction: column; padding-top: 120px; }
+  .mdp-poster { width: 100px; }
+  .mdp-scroll { padding: 24px 20px 60px; }
+}

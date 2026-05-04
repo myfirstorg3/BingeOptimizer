@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { gsap } from "gsap";
 import { useAuth } from "../context/AuthContext";
 import "./Navbar.css";
@@ -9,11 +9,12 @@ const NAV_LINKS = [
   { to: "/collection",label: "Collection", short: "COLL" },
   { to: "/tierlist",  label: "Tier List",  short: "TIER" },
   { to: "/search",    label: "Search",     short: "SRCH" },
-  { to: "/settings",  label: "Settings",   short: "SETT" },
+  { to: "/settings",  label: "Profile",    short: "PROF" },
 ];
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const navRef = useRef(null);
   const logoRef = useRef(null);
   const linksRef = useRef(null);
@@ -74,7 +75,7 @@ export default function Navbar() {
           </div>
           
           {user ? (
-            <button className="nav-connect btn btn--ghost" onClick={logout} style={{ fontSize: 10 }}>
+            <button className="nav-connect btn btn--ghost" onClick={() => { logout(); navigate("/"); }} style={{ fontSize: 10 }}>
               LOGOUT
             </button>
           ) : (

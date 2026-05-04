@@ -4,6 +4,49 @@ import { generateReviewSummary } from '../services/geminiService.js';
 
 const prisma = new PrismaClient();
 
+// GET /api/media/internal/:id — fetch cached media details by internal DB id (no external API)
+export const getMediaByInternalId = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const media = await prisma.media.findUnique({
+      where: { id },
+      include: {
+        reviewSummary: true,
+      }
+    });
+    if (!media) return res.status(404).json({ error: 'Media not found' });
+
+    let rawOMDB = null;
+    if (media.description) {
+      try { rawOMDB = JSON.parse(media.description); } catch {}
+    }
+
+    // If no AI summary yet, fire background generation
+    if (!media.reviewSummary) {
+      res.status(200).json({ media, rawOMDB, aiSummary: null, generatingAI: true });
+      generateReviewSummary(media.id, media.title, media.synopsis)
+        .catch(err => console.error('Background AI generation failed:', err.message));
+    } else {
+      res.status(200).json({ media, rawOMDB, aiSummary: media.reviewSummary, generatingAI: false });
+    }
+  } catch (error) {
+    console.error('Error in getMediaByInternalId:', error);
+    res.status(500).json({ error: 'Internal Server Error', detail: error.message });
+  }
+};
+
+// GET /api/media/internal/:id/ai-summary — poll for AI summary by internal id
+export const getAISummaryByInternalId = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const aiSummary = await prisma.aIReviewSummary.findFirst({ where: { mediaId: id } });
+    if (!aiSummary) return res.status(202).json({ ready: false });
+    res.status(200).json({ ready: true, aiSummary });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 export const getMediaDetails = async (req, res) => {
   const { imdbId } = req.params;
   if (!imdbId) return res.status(400).json({ error: "IMDB ID is required" });
@@ -141,6 +184,13 @@ export const addToCollection = async (req, res) => {
 
     const collection = await prisma.collection.findUnique({ where: { id: targetCollectionId } });
     res.status(201).json({ item, collection });
+
+    // Fire background AI summary generation if not already done
+    const existingSummary = await prisma.aIReviewSummary.findFirst({ where: { mediaId: media.id } });
+    if (!existingSummary) {
+      generateReviewSummary(media.id, media.title, media.synopsis)
+        .catch(err => console.error('Background AI generation on collect failed:', err.message));
+    }
 
   } catch (error) {
     console.error("Error in addToCollection:", error);

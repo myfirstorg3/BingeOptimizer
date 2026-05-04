@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import anime from "animejs";
 import { useAuth } from "../context/AuthContext";
+import MediaDetailPanel from "./MediaDetailPanel";
 import "./Collection.css";
 
 const API_BASE = "http://localhost:5000";
@@ -45,6 +46,7 @@ export default function Collection() {
   const [activeCollId, setActiveCollId] = useState(null);
   const [activeType, setActiveType]     = useState("all");
   const [layout, setLayout]             = useState("grid");
+  const [selectedItem, setSelectedItem] = useState(null);
 
   // Create modal
   const [showCreate, setShowCreate] = useState(false);
@@ -116,7 +118,6 @@ export default function Collection() {
   };
 
   const handleStatusChange = async (collectionId, mediaId, watchStatus) => {
-    // Optimistic local update + re-sort
     setCollections(prev => prev.map(c => {
       if (c.id !== collectionId) return c;
       const items = c.items.map(i => i.mediaId === mediaId ? { ...i, watchStatus } : i);
@@ -128,6 +129,21 @@ export default function Collection() {
         body: JSON.stringify({ watchStatus })
       });
     } catch {}
+  };
+
+  const handleTogglePublic = async (collectionId, currentIsPublic) => {
+    const newVal = !currentIsPublic;
+    // Optimistic
+    setCollections(prev => prev.map(c => c.id === collectionId ? { ...c, isPublic: newVal } : c));
+    try {
+      await apiFetch(`/api/collections/${collectionId}`, token, {
+        method: "PATCH",
+        body: JSON.stringify({ isPublic: newVal })
+      });
+    } catch {
+      // Revert on failure
+      setCollections(prev => prev.map(c => c.id === collectionId ? { ...c, isPublic: currentIsPublic } : c));
+    }
   };
 
   const activeCollection = collections.find(c => c.id === activeCollId);
@@ -206,6 +222,7 @@ export default function Collection() {
                 coll={coll}
                 active={activeCollId === coll.id}
                 onClick={() => setActiveCollId(coll.id)}
+                onTogglePublic={(e) => { e.stopPropagation(); handleTogglePublic(coll.id, coll.isPublic); }}
               />
             ))}
           </div>
@@ -268,6 +285,7 @@ export default function Collection() {
                             collectionId={activeCollId}
                             onRemove={() => handleRemoveItem(activeCollId, item.mediaId)}
                             onStatusChange={(s) => handleStatusChange(activeCollId, item.mediaId, s)}
+                            onCardClick={() => setSelectedItem(item)}
                           />
                         ))}
                       </div>
@@ -302,12 +320,20 @@ export default function Collection() {
           </div>
         </div>
       )}
+
+      {/* Media Detail Panel */}
+      {selectedItem && (
+        <MediaDetailPanel
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+        />
+      )}
     </div>
   );
 }
 
 // ─── Collection Bucket Card ──────────────────────────────────────
-function CollectionBucketCard({ coll, active, onClick }) {
+function CollectionBucketCard({ coll, active, onClick, onTogglePublic }) {
   const ref = useRef(null);
   const items    = coll.items || [];
   const watching  = items.filter(i => i.watchStatus === "watching").length;
@@ -357,6 +383,13 @@ function CollectionBucketCard({ coll, active, onClick }) {
           {queued    > 0 && <span style={{ color:"#f5c518" }}>◎ {queued}</span>}
           {completed > 0 && <span style={{ color:"#4ade80" }}>✓ {completed}</span>}
         </div>
+        <button
+          className={`coll-public-toggle ${coll.isPublic ? "coll-public-toggle--on" : ""}`}
+          onClick={onTogglePublic}
+          title={coll.isPublic ? "Public — click to make private" : "Private — click to make public"}
+        >
+          {coll.isPublic ? "🌐 PUBLIC" : "🔒 PRIVATE"}
+        </button>
       </div>
 
       {active && <div className="coll-bucket-active-bar" />}
@@ -365,7 +398,7 @@ function CollectionBucketCard({ coll, active, onClick }) {
 }
 
 // ─── Collection Media Card ───────────────────────────────────────
-function CollectionCard({ item, layout, collectionId, onRemove, onStatusChange }) {
+function CollectionCard({ item, layout, collectionId, onRemove, onStatusChange, onCardClick }) {
   const cardRef = useRef(null);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const media   = item.media;
@@ -400,7 +433,7 @@ function CollectionCard({ item, layout, collectionId, onRemove, onStatusChange }
 
   if (layout === "list") {
     return (
-      <div className="coll-card coll-card--list glass" ref={cardRef}>
+      <div className="coll-card coll-card--list glass" ref={cardRef} onClick={onCardClick} style={{ cursor: "none" }}>
         <img src={poster} alt={title} className="coll-list-img" onError={e => { e.target.src = FALLBACK; }} />
         <div className="coll-list-info">
           <div className="coll-list-title">{title}</div>
@@ -434,9 +467,10 @@ function CollectionCard({ item, layout, collectionId, onRemove, onStatusChange }
     <div
       ref={cardRef}
       className="coll-card media-card"
-      style={{ transformStyle:"preserve-3d", perspective:"600px" }}
+      style={{ transformStyle:"preserve-3d", perspective:"600px", cursor:"none" }}
       onMouseMove={handleMouse}
       onMouseLeave={handleLeave}
+      onClick={onCardClick}
     >
       <img src={poster} alt={title} className="media-card__img" loading="lazy" onError={e => { e.target.src = FALLBACK; }} />
       {rating && <div className="coll-rating-badge font-mono">{rating}</div>}
@@ -445,7 +479,7 @@ function CollectionCard({ item, layout, collectionId, onRemove, onStatusChange }
       <button
         className="coll-status-badge"
         style={{ background: statusMeta.color + "22", color: statusMeta.color, borderColor: statusMeta.color + "55" }}
-        onClick={cycleStatus}
+        onClick={(e) => { e.stopPropagation(); cycleStatus(e); }}
         title="Change status"
       >
         {statusMeta.icon}
@@ -454,7 +488,7 @@ function CollectionCard({ item, layout, collectionId, onRemove, onStatusChange }
         <StatusMenu current={status} onSelect={s => { onStatusChange(s); setShowStatusMenu(false); }} style={{ top:40, left:8 }} />
       )}
 
-      <button className="coll-remove-grid-btn" onClick={onRemove} title="Remove">✕</button>
+      <button className="coll-remove-grid-btn" onClick={(e) => { e.stopPropagation(); onRemove(); }} title="Remove">✕</button>
       <div className="media-card__overlay">
         <div className="media-card__title">{title}</div>
         <div className="media-card__meta">{year} · {type.toUpperCase()}</div>

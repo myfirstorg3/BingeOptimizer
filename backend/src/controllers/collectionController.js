@@ -21,7 +21,9 @@ export const getCollections = async (req, res) => {
       orderBy: { createdAt: 'asc' },
       include: {
         items: {
-          include: { media: true },
+          include: {
+            media: { include: { reviewSummary: true } }
+          },
         }
       }
     });
@@ -49,6 +51,29 @@ export const getCollections = async (req, res) => {
     }));
 
     res.json(enriched);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// PATCH /api/collections/:id
+export const updateCollection = async (req, res) => {
+  try {
+    const { collectionId } = req.params;
+    const { name, description, isPublic } = req.body;
+    const collection = await prisma.collection.findFirst({
+      where: { id: collectionId, userId: req.user.id }
+    });
+    if (!collection) return res.status(404).json({ message: 'Collection not found' });
+    const updated = await prisma.collection.update({
+      where: { id: collectionId },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(description !== undefined && { description }),
+        ...(isPublic !== undefined && { isPublic: Boolean(isPublic) }),
+      }
+    });
+    res.json(updated);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
