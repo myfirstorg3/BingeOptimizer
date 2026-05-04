@@ -8,12 +8,15 @@ import Footer  from "./components/Footer";
 import Dashboard  from "./pages/Dashboard";
 import Collection from "./pages/Collection";
 import TierList   from "./pages/TierList";
+import TierListEditor from "./pages/TierListEditor";
 import Search     from "./pages/Search";
 import Settings   from "./pages/Settings";
 import Contact  from "./pages/Contact";
 import Members    from "./pages/Members";
 import Terms      from "./pages/Terms";
 import Page67     from "./pages/Page67";
+import Login      from "./pages/Login";
+import Register   from "./pages/Register";
 import "./styles/globals.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -44,12 +47,16 @@ export default function App() {
         <Routes>
           <Route path="/"           element={<Dashboard />}  />
           <Route path="/collection" element={<Collection />} />
-          <Route path="/tierlist"   element={<TierList />}   />
+          <Route path="/tierlist"      element={<TierList />}       />
+          <Route path="/tierlist/:id"   element={<TierListEditor />} />
           <Route path="/search"     element={<Search />}     />
           <Route path="/settings"   element={<Settings />}   />
           <Route path="/contact"    element={<Contact />}    />
           <Route path="/members"    element={<Members />}    />
           <Route path="/terms"      element={<Terms />}      />
+          <Route path="/login"      element={<Login />}      />
+          <Route path="/register"   element={<Register />}   />
+          <Route path="/67"         element={<Page67 />}     />
           <Route path="/67"         element={<Page67 />}     />
         </Routes>
       </PageWrapper>

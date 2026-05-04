@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { gsap } from "gsap";
+import { useAuth } from "../context/AuthContext";
 import "./Navbar.css";
 
 const NAV_LINKS = [
@@ -12,6 +13,7 @@ const NAV_LINKS = [
 ];
 
 export default function Navbar() {
+  const { user, logout } = useAuth();
   const navRef = useRef(null);
   const logoRef = useRef(null);
   const linksRef = useRef(null);
@@ -66,11 +68,25 @@ export default function Navbar() {
         <div className="navbar__right">
           <div className="nav-status">
             <span className="status-dot" />
-            <span className="font-mono" style={{ fontSize: 10, letterSpacing: "0.1em", color: "var(--text-secondary)" }}>LIVE</span>
+            <span className="font-mono" style={{ fontSize: 10, letterSpacing: "0.1em", color: "var(--text-secondary)" }}>
+              {user ? user.username.toUpperCase() : "GUEST"}
+            </span>
           </div>
-          <button className="nav-connect btn btn--primary">
-            CONNECT_
-          </button>
+          
+          {user ? (
+            <button className="nav-connect btn btn--ghost" onClick={logout} style={{ fontSize: 10 }}>
+              LOGOUT
+            </button>
+          ) : (
+            <>
+              <NavLink to="/login" className="nav-connect btn btn--ghost" style={{ fontSize: 10, marginRight: '10px' }}>
+                LOGIN
+              </NavLink>
+              <NavLink to="/register" className="nav-connect btn btn--primary" style={{ fontSize: 10 }}>
+                REGISTER_
+              </NavLink>
+            </>
+          )}
         </div>
       </div>
 
