@@ -14,6 +14,8 @@ import Contact  from "./pages/Contact";
 import Members    from "./pages/Members";
 import Terms      from "./pages/Terms";
 import Page67     from "./pages/Page67";
+import Login      from "./pages/Login";
+import Register   from "./pages/Register";
 import "./styles/globals.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -50,6 +52,9 @@ export default function App() {
           <Route path="/contact"    element={<Contact />}    />
           <Route path="/members"    element={<Members />}    />
           <Route path="/terms"      element={<Terms />}      />
+          <Route path="/login"      element={<Login />}      />
+          <Route path="/register"   element={<Register />}   />
+          <Route path="/67"         element={<Page67 />}     />
           <Route path="/67"         element={<Page67 />}     />
         </Routes>
       </PageWrapper>

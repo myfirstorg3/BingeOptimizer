@@ -1,0 +1,288 @@
+// Prisma Schema for Blastoise
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                String    @id @default(uuid())
+  username          String    @unique
+  email             String    @unique
+  passwordHash      String?
+  firstName         String?
+  lastName          String?
+  avatarUrl         String?
+  bio               String?
+  isPublic          Boolean   @default(true)
+  showOnlineStatus  Boolean   @default(true)
+  loginProvider     String    @default("local") // local, google, facebook
+  providerId        String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  preferences       UserPreference?
+  friendsInitiated  UserFriendship[] @relation("initiator")
+  friendsReceived   UserFriendship[] @relation("receiver")
+  avatars           UserAvatar[]
+  collections       Collection[]
+  tierLists         TierList[]
+  mediaStatus       UserMediaStatus[]
+  pageViews         MediaPageView[]
+  bingeSessions     BingeSession[]
+
+  @@index([email])
+  @@index([username])
+}
+
+model UserPreference {
+  id                    String    @id @default(uuid())
+  userId                String    @unique
+  emailNotifications    Boolean   @default(true)
+  pushNotifications     Boolean   @default(true)
+  preferredMoods        String?
+  preferredGenres       String?
+  updatedAt             DateTime  @updatedAt
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserFriendship {
+  id        String    @id @default(uuid())
+  userId    String
+  friendId  String
+  status    String    @default("pending") // pending, accepted, blocked
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user      User      @relation("initiator", fields: [userId], references: [id], onDelete: Cascade)
+  friend    User      @relation("receiver", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@index([friendId])
+}
+
+model UserAvatar {
+  id        String    @id @default(uuid())
+  userId    String
+  avatarData Bytes
+  fileName  String?
+  fileSize  Int?
+  mimeType  String?
+  isDefault Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+model Media {
+  id              String    @id @default(uuid())
+  externalId      String
+  externalSource  String    @default("omdb") // omdb, tmdb, local
+  title           String
+  description     String?
+  posterUrl       String?
+  backdropUrl     String?
+  type            String    // movie, tv, anime
+  releaseDate     DateTime?
+  endDate         DateTime?
+  durationMinutes Int?
+  numberOfSeasons Int?
+  numberOfEpisodes Int?
+  synopsis        String?
+  avgRating       Float?
+  ratingCount     Int       @default(0)
+  language        String?
+  country         String?
+  lastReviewFetchAt DateTime?
+  lastApiFetchAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  genres          Genre[]
+  reviews         Review[]
+  reviewSummary   AIReviewSummary?
+  pageViews       MediaPageView[]
+  userStatus      UserMediaStatus[]
+  collectionItems CollectionItem[]
+  tierListItems   TierListItem[]
+  embedding       MediaEmbedding?
+
+  @@unique([externalId, externalSource])
+  @@index([title])
+  @@index([type])
+  @@index([releaseDate])
+}
+
+model Genre {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+
+  media     Media[]
+
+  @@index([name])
+}
+
+model Review {
+  id              String    @id @default(uuid())
+  mediaId         String
+  externalReviewId String?
+  source          String?
+  author          String?
+  content         String?
+  score           Float?
+  reviewDate      DateTime?
+  fetchedAt       DateTime  @default(now())
+
+  media           Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@index([mediaId])
+  @@index([fetchedAt])
+}
+
+model AIReviewSummary {
+  id              String    @id @default(uuid())
+  mediaId         String    @unique
+  summaryText     String?
+  sentimentScore  Float?
+  reviewCountBasis Int?
+  llmModelUsed    String?
+  generatedAt     DateTime  @default(now())
+  nextUpdateAt    DateTime?
+
+  media           Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@index([nextUpdateAt])
+}
+
+model MediaPageView {
+  id        String    @id @default(uuid())
+  mediaId   String
+  userId    String
+  viewedAt  DateTime  @default(now())
+
+  media     Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([mediaId])
+}
+
+model UserMediaStatus {
+  id              String    @id @default(uuid())
+  userId          String
+  mediaId         String
+  watchStatus     String    @default("unwatched") // unwatched, watching, completed, abandoned
+  personalRating  Float?
+  episodesWatched Int       @default(0)
+  totalEpisodes   Int?
+  runtimeWatchedMins Int    @default(0)
+  lastWatchedAt   DateTime?
+  addedAt         DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media           Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mediaId])
+  @@index([watchStatus])
+}
+
+model Collection {
+  id          String    @id @default(uuid())
+  userId      String
+  name        String
+  description String?
+  coverUrl    String?
+  isPublic    Boolean   @default(false)
+  sortOrder   Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       CollectionItem[]
+  tierLists   TierList[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model CollectionItem {
+  id          String    @id @default(uuid())
+  collectionId String
+  mediaId     String
+  userScore   Int?
+  notes       String?
+  addedAt     DateTime  @default(now())
+
+  collection  Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  media       Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, mediaId])
+  @@index([mediaId])
+}
+
+model TierList {
+  id            String    @id @default(uuid())
+  userId        String
+  title         String
+  description   String?
+  isPublic      Boolean   @default(false)
+  collectionId  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collection    Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  items         TierListItem[]
+
+  @@index([userId])
+}
+
+model TierListItem {
+  id          String    @id @default(uuid())
+  tierListId  String
+  mediaId     String
+  tier        String?
+  position    Int?
+  addedAt     DateTime  @default(now())
+
+  tierList    TierList  @relation(fields: [tierListId], references: [id], onDelete: Cascade)
+  media       Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model BingeSession {
+  id              String    @id @default(uuid())
+  userId          String
+  timeAvailableMins Int
+  selectedMoods   String?
+  genreFilter     String?
+  candidateMediaIds String?
+  rankedResults   String?
+  llmModelUsed    String?
+  llmLatencyMs    Int?
+  createdAt       DateTime  @default(now())
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model MediaEmbedding {
+  id              String    @id @default(uuid())
+  mediaId         String    @unique
+  embedding       String?   // JSON stringified array
+  titleEmbedding  String?   // For title-specific search
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  media           Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
