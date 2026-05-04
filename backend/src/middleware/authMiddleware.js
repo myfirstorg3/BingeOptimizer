@@ -29,3 +29,21 @@ export const protect = async (req, res, next) => {
     res.status(401).json({ message: 'Not authorized, no token' });
   }
 };
+
+// Attach user if token present, but don't require it
+export const optionalProtect = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer')) {
+    try {
+      const token = authHeader.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        select: { id: true, username: true, email: true }
+      });
+    } catch {
+      // ignore invalid token
+    }
+  }
+  next();
+};
