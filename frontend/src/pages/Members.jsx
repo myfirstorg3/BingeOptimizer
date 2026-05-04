@@ -1,12 +1,11 @@
 import { useState } from "react";
 
 const MEMBERS = [
-  { id: 1,  name: "Aria Voss",      role: "Founder",          shows: 412, rating: 9.4, accent: "cyan",  initials: "AV" },
-  { id: 2,  name: "Kael Morrow",    role: "Co-founder",       shows: 388, rating: 9.1, accent: "pink",  initials: "KM" },
-  { id: 3,  name: "Sena Obi",       role: "Lead Dev",         shows: 301, rating: 8.8, accent: "gold",  initials: "SO" },
-  { id: 4,  name: "Riku Tanaka",    role: "Design",           shows: 275, rating: 9.2, accent: "green", initials: "RT" },
-  { id: 5,  name: "Demi Hale",      role: "Community",        shows: 248, rating: 8.5, accent: "cyan",  initials: "DH" },
-  { id: 6,  name: "Zara Finn",      role: "Content",          shows: 190, rating: 8.9, accent: "pink",  initials: "ZF" },
+  { id: 1,  name: "Aaryan Degama",  role: "Founder",          shows: 412, rating: 9.4, accent: "cyan",  initials: "AD" },
+  { id: 2,  name: "Geethika",       role: "Co-founder",       shows: 388, rating: 9.1, accent: "pink",  initials: "G" },
+  { id: 3,  name: "Jalendu Pandey", role: "Lead Dev",         shows: 301, rating: 8.8, accent: "gold",  initials: "JP" },
+  { id: 4,  name: "Archee Jaiswal", role: "Design",           shows: 275, rating: 9.2, accent: "green", initials: "AJ" },
+  { id: 5,  name: "Manas Singh",    role: "Community",        shows: 248, rating: 8.5, accent: "cyan",  initials: "MS" },
 ];
 
 const ACCENT_MAP = {
@@ -20,57 +19,45 @@ function MemberCard({ member }) {
   const ac = ACCENT_MAP[member.accent];
 
   return (
-    <div className="member-card glass">
-      {/* Avatar */}
-      <div
-        className="member-avatar font-display"
-        style={{ background: ac.dim, border: `1px solid ${ac.border}`, color: ac.color }}
+    <div className="member-card glass" style={{ padding: '40px 24px', alignItems: 'center' }}>
+      {/* Profile Picture */}
+      <div 
+        className="member-pic-wrapper" 
+        style={{ 
+          width: '180px', 
+          height: '180px', 
+          background: ac.dim, 
+          borderRadius: '50%', 
+          border: `2px solid ${ac.color}`,
+          overflow: 'hidden',
+          marginBottom: '24px',
+          flexShrink: 0
+        }}
       >
-        {member.initials}
+        <img 
+          src={`/assets/${member.name.split(" ")[0].toLowerCase()}.png`}
+          alt={member.name}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          onError={(e) => { 
+            // Fallback if image not found: hide img and show initials
+            e.target.style.display = 'none';
+            e.target.parentElement.style.display = 'flex';
+            e.target.parentElement.style.alignItems = 'center';
+            e.target.parentElement.style.justifyContent = 'center';
+            e.target.parentElement.innerHTML = `<span class="font-display" style="font-size: 56px; color: ${ac.color}; opacity: 0.5;">${member.initials}</span>`;
+          }}
+        />
       </div>
 
       {/* Info */}
-      <div className="member-info">
-        <p className="member-name">{member.name}</p>
-        <p
-          className="member-role font-mono"
-          style={{ color: ac.color, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase" }}
-        >
-          {member.role}
-        </p>
-      </div>
-
-      {/* Stats */}
-      <div className="member-stats">
-        <div className="member-stat">
-          <span className="font-mono" style={{ fontSize: 18, fontWeight: 700, color: ac.color }}>
-            {member.shows}
-          </span>
-          <span className="font-mono text-muted" style={{ fontSize: 10, letterSpacing: "0.08em" }}>
-            SHOWS
-          </span>
-        </div>
-        <div className="member-stat-divider" />
-        <div className="member-stat">
-          <span className="font-mono" style={{ fontSize: 18, fontWeight: 700, color: ac.color }}>
-            {member.rating}
-          </span>
-          <span className="font-mono text-muted" style={{ fontSize: 10, letterSpacing: "0.08em" }}>
-            AVG SCORE
-          </span>
-        </div>
+      <div className="member-info" style={{ alignItems: 'center', width: '100%' }}>
+        <p className="member-name" style={{ textAlign: 'center', fontSize: '22px' }}>{member.name}</p>
       </div>
     </div>
   );
 }
 
 export default function Members() {
-  const [search, setSearch] = useState("");
-  const filtered = MEMBERS.filter((m) =>
-    m.name.toLowerCase().includes(search.toLowerCase()) ||
-    m.role.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
     <main className="page grid-bg">
       <div className="container section">
@@ -86,33 +73,13 @@ export default function Members() {
           </p>
         </div>
 
-        <hr className="divider" style={{ margin: "48px 0 32px" }} />
-
-        {/* ── Search ── */}
-        <div style={{ maxWidth: 360, marginBottom: 40 }}>
-          <input
-            className="input"
-            placeholder="search members..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        {/* ── Count tag ── */}
-        <div style={{ marginBottom: 24 }}>
-          <span className="tag tag--cyan">{filtered.length} members</span>
-        </div>
+        <hr className="divider" style={{ margin: "16px 0 32px" }} />
 
         {/* ── Grid ── */}
         <div className="members-grid">
-          {filtered.map((m) => (
+          {MEMBERS.map((m) => (
             <MemberCard key={m.id} member={m} />
           ))}
-          {filtered.length === 0 && (
-            <p className="font-mono text-muted" style={{ gridColumn: "1 / -1", padding: "40px 0" }}>
-              no members found.
-            </p>
-          )}
         </div>
       </div>
 
@@ -127,16 +94,21 @@ export default function Members() {
 
         .members-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 16px;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 32px;
+        }
+        @media (max-width: 900px) {
+          .members-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+          .members-grid { grid-template-columns: 1fr; }
         }
 
         .member-card {
           border-radius: var(--r-lg);
-          padding: 24px;
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          overflow: hidden;
           transition: border-color 0.25s, transform 0.25s;
         }
         .member-card:hover {
@@ -144,36 +116,8 @@ export default function Members() {
           transform: translateY(-3px);
         }
 
-        .member-avatar {
-          width: 52px; height: 52px;
-          border-radius: var(--r-md);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
-          letter-spacing: 0.04em;
-        }
-
         .member-info { display: flex; flex-direction: column; gap: 4px; }
         .member-name { font-size: 16px; font-weight: 600; letter-spacing: 0.01em; }
-
-        .member-stats {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          padding-top: 16px;
-          border-top: 1px solid var(--border);
-        }
-        .member-stat {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-        .member-stat-divider {
-          width: 1px;
-          height: 32px;
-          background: var(--border-bright);
-        }
       `}</style>
     </main>
   );

@@ -25,6 +25,7 @@ export default function Settings() {
   const { user: authUser, token, logout } = useAuth();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("profile");
+  const [searchUser, setSearchUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const sidebarRef = useRef(null);
@@ -70,7 +71,7 @@ export default function Settings() {
     <div className="page settings-page">
       <div className="noise-overlay" />
       <div className="container settings-wrap">
-        <ProfileSearch API={API} token={token} />
+        <ProfileSearch API={API} token={token} onSelectUser={(u) => { setActiveSection("friends"); setSearchUser(u); }} />
         <div className="settings-layout">
           <aside className="settings-sidebar glass" ref={sidebarRef}>
             <div className="sidebar-header">
@@ -99,7 +100,7 @@ export default function Settings() {
           <main className="settings-content" ref={contentRef}>
             {activeSection === "profile"    && <ProfileSection profile={profile} onUpdate={fetchProfile} API={API} authHeader={authHeader} />}
             {activeSection === "security"   && <SecuritySection API={API} authHeader={authHeader} />}
-            {activeSection === "friends"    && <FriendsSection API={API} authHeader={authHeader} />}
+            {activeSection === "friends"    && <FriendsSection API={API} authHeader={authHeader} searchUser={searchUser} onClearSearchUser={() => setSearchUser(null)} />}
             {activeSection === "disconnect" && <DisconnectSection logout={logout} navigate={navigate} />}
           </main>
         </div>
@@ -109,7 +110,7 @@ export default function Settings() {
 }
 
 // ─── Profile Search Bar ───────────────────────────────────────────────────────
-function ProfileSearch({ API, token }) {
+function ProfileSearch({ API, token, onSelectUser }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -155,7 +156,7 @@ function ProfileSearch({ API, token }) {
         {open && (
           <div className="psb-dropdown">
             {results.map(u => (
-              <button key={u.id} className="psb-item" onMouseDown={() => setSelected(u)}>
+              <button key={u.id} className="psb-item" onMouseDown={() => { onSelectUser(u); setQuery(""); setResults([]); }}>
                 <img src={avSrc(u)} alt={u.username} className="psb-item-av" />
                 <div className="psb-item-info">
                   <span className="psb-item-name">{u.username}</span>
@@ -169,25 +170,28 @@ function ProfileSearch({ API, token }) {
           </div>
         )}
       </div>
-      {selected && (
-        <FriendDrawer user={selected} API={API} token={token} onClose={() => { setSelected(null); setQuery(""); setResults([]); }} />
-      )}
     </div>
   );
 }
 
-// ─── Friend Profile Drawer ────────────────────────────────────────────────────
-function FriendDrawer({ user, API, token, onClose }) {
+// ─── Friend Profile (Inline) ──────────────────────────────────────────────────
+function FriendProfile({ user, API, token, onClose, friendsData, onReqSent }) {
   const authHeader = { headers: { Authorization: `Bearer ${token}` } };
   const [pubData, setPubData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reqStatus, setReqStatus] = useState(null);
   const [tab, setTab] = useState("collections");
-  const drawerRef = useRef(null);
+  const containerRef = useRef(null);
+
+  // Check relationship status
+  const isFriend = friendsData.friends.some(f => f.user?.id === user.id);
+  const isPendingOut = friendsData.outgoing.some(r => r.friend?.id === user.id);
+  const isPendingIn = friendsData.incoming.some(r => r.user?.id === user.id);
 
   useEffect(() => {
+    setLoading(true);
     axios.get(`${API}/users/${user.id}/public-data`).then(r => setPubData(r.data)).catch(() => {}).finally(() => setLoading(false));
-    if (drawerRef.current) gsap.fromTo(drawerRef.current, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" });
+    if (containerRef.current) gsap.fromTo(containerRef.current, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" });
   }, [user.id]);
 
   const sendReq = async () => {
@@ -195,18 +199,19 @@ function FriendDrawer({ user, API, token, onClose }) {
     try {
       await axios.post(`${API}/users/friends/request`, { targetUserId: user.id }, authHeader);
       setReqStatus("sent");
+      onReqSent(); // Refresh friends list
     } catch (e) { setReqStatus(e.response?.data?.message || "error"); }
   };
 
   const TIER_COLORS = { S: "#ff2d6b", A: "#ff8c00", B: "#ffb800", C: "#00e5ff", D: "#9b59b6", F: "#444", unranked: "#333" };
 
   return (
-    <div className="drawer-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="drawer glass" ref={drawerRef}>
-        <button className="drawer-close" onClick={onClose}>✕</button>
-
+    <div className="friend-profile-inline" ref={containerRef}>
+      <button className="btn btn--ghost" onClick={onClose} style={{ marginBottom: 20, fontSize: 11 }}>← BACK TO FRIENDS</button>
+      
+      <div className="drawer glass" style={{ position: 'relative', width: '100%', height: 'auto', maxHeight: 'none', border: '1px solid var(--border)', borderRadius: 'var(--r-lg)' }}>
         {/* Hero */}
-        <div className="drawer-hero">
+        <div className="drawer-hero" style={{ paddingTop: 30 }}>
           <div className="drawer-av-wrap">
             <img src={avSrc(user)} alt={user.username} className="drawer-av" />
             <div className="drawer-av-ring" />
@@ -219,12 +224,24 @@ function FriendDrawer({ user, API, token, onClose }) {
             {user.bio && <p className="drawer-bio">{user.bio}</p>}
             <p className="drawer-since font-mono">Member since {new Date(user.createdAt).getFullYear()}</p>
           </div>
-          <button
-            className={`btn ${reqStatus === "sent" ? "btn--ghost" : "btn--primary"} drawer-add-btn`}
-            onClick={sendReq}
-            disabled={reqStatus === "sending" || reqStatus === "sent"}>
-            {reqStatus === "sent" ? "✓ Sent" : reqStatus === "sending" ? "…" : typeof reqStatus === "string" && reqStatus && reqStatus !== "null" ? reqStatus : "+ Add Friend"}
-          </button>
+          
+          <div className="drawer-actions-wrap" style={{ display: 'flex', gap: 10, alignSelf: 'flex-start', marginTop: 16 }}>
+            {isFriend ? (
+              <span className="tag tag--cyan" style={{ padding: '8px 16px' }}>✓ Friends</span>
+            ) : isPendingOut ? (
+              <span className="tag tag--gold" style={{ padding: '8px 16px' }}>Pending Request</span>
+            ) : isPendingIn ? (
+              <span className="tag tag--pink" style={{ padding: '8px 16px' }}>Sent you a request</span>
+            ) : (
+              <button
+                className={`btn ${reqStatus === "sent" ? "btn--ghost" : "btn--primary"} drawer-add-btn`}
+                onClick={sendReq}
+                style={{ position: 'relative', top: 0, right: 0 }}
+                disabled={reqStatus === "sending" || reqStatus === "sent"}>
+                {reqStatus === "sent" ? "✓ Request Sent" : reqStatus === "sending" ? "…" : "+ Add Friend"}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Tabs */}
@@ -238,7 +255,7 @@ function FriendDrawer({ user, API, token, onClose }) {
         </div>
 
         {/* Body */}
-        <div className="drawer-body">
+        <div className="drawer-body" style={{ minHeight: 300 }}>
           {loading && <div className="settings-spinner" style={{ margin: "40px auto" }} />}
           {!loading && tab === "collections" && (
             pubData?.collections?.length > 0 ? (
@@ -306,7 +323,7 @@ function FriendDrawer({ user, API, token, onClose }) {
 }
 
 // ─── Friends Section ──────────────────────────────────────────────────────────
-function FriendsSection({ API, authHeader }) {
+function FriendsSection({ API, authHeader, searchUser, onClearSearchUser }) {
   const [data, setData] = useState({ friends: [], incoming: [], outgoing: [] });
   const [loading, setLoading] = useState(true);
   const [viewing, setViewing] = useState(null);
@@ -321,21 +338,40 @@ function FriendsSection({ API, authHeader }) {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (searchUser) {
+      setViewing(searchUser);
+      onClearSearchUser();
+    }
+  }, [searchUser, onClearSearchUser]);
+
   const respond = async (id, action) => {
     try { await axios.post(`${API}/users/friends/respond`, { friendshipId: id, action }, authHeader); load(); }
     catch (e) { alert(e.response?.data?.message || "Error"); }
   };
   const remove = async (friendId) => {
     if (!confirm("Remove friend?")) return;
-    try { await axios.delete(`${API}/users/friends/${friendId}`, authHeader); load(); }
+    try { await axios.delete(`${API}/users/friends/${friendId}`, authHeader); load(); setViewing(null); }
     catch (e) { alert(e.response?.data?.message || "Error"); }
   };
 
   if (loading) return <div className="settings-card glass"><div className="settings-spinner" style={{ margin: "40px auto" }} /></div>;
 
+  if (viewing) {
+    return (
+      <FriendProfile 
+        user={viewing} 
+        API={API} 
+        token={token} 
+        onClose={() => setViewing(null)} 
+        friendsData={data} 
+        onReqSent={load}
+      />
+    );
+  }
+
   return (
     <div className="friends-wrap">
-      {viewing && <FriendDrawer user={viewing} API={API} token={token} onClose={() => setViewing(null)} />}
 
       {data.incoming.length > 0 && (
         <div className="settings-card glass" style={{ marginBottom: 20 }}>

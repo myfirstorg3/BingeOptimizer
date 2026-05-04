@@ -4,12 +4,13 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import anime from "animejs";
 import { MOODS } from "../data/mockData";
 import { useAuth } from "../context/AuthContext";
+import MediaDetailPanel from "./MediaDetailPanel";
 import "./Dashboard.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const API_BASE = "http://localhost:5000";
-const FALLBACK_POSTER = "https://via.placeholder.com/300x450/0a0a0f/00e5ff?text=NO+POSTER";
+const FALLBACK_POSTER = "https://placehold.co/300x450/0a0a0f/00e5ff?text=NO+POSTER";
 
 const TIME_OPTIONS = [
   { label: "30m", mins: 30 },
@@ -22,21 +23,21 @@ const TIME_OPTIONS = [
 
 // Curated all-time favorite picks (for guest landing)
 const ALL_TIME_PICKS = [
-  { title: "The Dark Knight",      year: 2008, imdb: "tt0468569", rating: 9.0, genre: "Action", poster: "https://m.media-amazon.com/images/M/MV5BMTMxNTMwODM0NF5BMl5BanBnXkFtZTcwODAyMTk2Mw@@._V1_SX300.jpg" },
-  { title: "Inception",            year: 2010, imdb: "tt1375666", rating: 8.8, genre: "Sci-Fi",  poster: "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg" },
-  { title: "Interstellar",         year: 2014, imdb: "tt0816692", rating: 8.7, genre: "Sci-Fi",  poster: "https://m.media-amazon.com/images/M/MV5BZjdkOTU3MDktN2IxOS00OGEyLWFmMjktY2FiMmZkNWIyODZiXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_SX300.jpg" },
-  { title: "Breaking Bad",         year: 2008, imdb: "tt0903747", rating: 9.5, genre: "Drama",   poster: "https://m.media-amazon.com/images/M/MV5BYmQ4YWMxYjUtNjZmYi00MDdmLWJjOTUtYjc2OGZjZTg5YzU3XkEyXkFqcGdeQXVyMTMzNDExODE5._V1_SX300.jpg" },
-  { title: "Parasite",             year: 2019, imdb: "tt6751668", rating: 8.5, genre: "Thriller", poster: "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg" },
-  { title: "Attack on Titan",      year: 2013, imdb: "tt2560140", rating: 9.0, genre: "Anime",   poster: "https://m.media-amazon.com/images/M/MV5BNDFjYTIxMjctYTQ2ZC00OGQ4LWI2MjgtOTQ2ZjYxNGJmOGM4XkEyXkFqcGdeQXVyNzI3NjY3NjQ@._V1_SX300.jpg" },
+  { title: "The Dark Knight",      year: 2008, imdb: "tt0468569", rating: 9.0, genre: "Action", poster: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg" },
+  { title: "Inception",            year: 2010, imdb: "tt1375666", rating: 8.8, genre: "Sci-Fi",  poster: "https://image.tmdb.org/t/p/w500/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg" },
+  { title: "Interstellar",         year: 2014, imdb: "tt0816692", rating: 8.7, genre: "Sci-Fi",  poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" },
+  { title: "Breaking Bad",         year: 2008, imdb: "tt0903747", rating: 9.5, genre: "Drama",   poster: "https://image.tmdb.org/t/p/w500/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg" },
+  { title: "Parasite",             year: 2019, imdb: "tt6751668", rating: 8.5, genre: "Thriller", poster: "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg" },
+  { title: "Attack on Titan",      year: 2013, imdb: "tt2560140", rating: 9.0, genre: "Anime",   poster: "https://image.tmdb.org/t/p/w500/hTP1DtLGFamjfu8WqjnuQdP1n4i.jpg" },
 ];
 
 const TRENDING_NOW = [
-  { title: "Dune: Part Two",   year: 2024, genre: "Sci-Fi",  rating: 8.5, poster: "https://m.media-amazon.com/images/M/MV5BN2QyZGU4ZDctOWMzMy00NTc5LThlOGQtODhmNDI1NjQ0OGIxXkEyXkFqcGdeQXVyMDM2NDM2MQ@@._V1_SX300.jpg" },
-  { title: "Poor Things",       year: 2023, genre: "Drama",   rating: 8.0, poster: "https://m.media-amazon.com/images/M/MV5BNGIyYWMzNjktNDE3Nl5BNl5BanBnXkFtZTcwOTU4NTMzNA@@._V1_SX300.jpg" },
-  { title: "Oppenheimer",       year: 2023, genre: "History", rating: 8.9, poster: "https://m.media-amazon.com/images/M/MV5BMDBmYTZjNjUtN2M1MS00MTQ2LTk2ODgtNzc2M2QyZGE5NTVjXkEyXkFqcGdeQXVyNzAwMjU2MTY@._V1_SX300.jpg" },
-  { title: "The Bear",          year: 2022, genre: "Drama",   rating: 8.6, poster: "https://m.media-amazon.com/images/M/MV5BYTE5ZjIwMDItYzRjMS00ZjA0LTljNWEtNGZhYjM3OTI5OTU4XkEyXkFqcGdeQXVyMTkxNjUyNQ@@._V1_SX300.jpg" },
-  { title: "Shogun",            year: 2024, genre: "History", rating: 9.0, poster: "https://m.media-amazon.com/images/M/MV5BNjM5ZDJlMWItMGQ1Ni00MDRiLWI1MWQtNGViMmU3YThkMmY4XkEyXkFqcGdeQXVyMTkxNjUyNQ@@._V1_SX300.jpg" },
-  { title: "Fallout",           year: 2024, genre: "Sci-Fi",  rating: 8.5, poster: "https://m.media-amazon.com/images/M/MV5BZjJlOWVlNDMtODA0Zi00YzYzLWFiYWItNDMwMDY4NDFlZjllXkEyXkFqcGdeQXVyMTkxNjUyNQ@@._V1_SX300.jpg" },
+  { title: "Dune: Part Two",   year: 2024, genre: "Sci-Fi",  rating: 8.5, poster: "https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2JGjjc91p.jpg" },
+  { title: "Poor Things",       year: 2023, genre: "Drama",   rating: 8.0, poster: "https://image.tmdb.org/t/p/w500/kCGlIMHnOm8Ph1ih2qA82t4D1R7.jpg" },
+  { title: "Oppenheimer",       year: 2023, genre: "History", rating: 8.9, poster: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg" },
+  { title: "The Bear",          year: 2022, genre: "Drama",   rating: 8.6, poster: "https://image.tmdb.org/t/p/w500/rZ6X1vQz7Z0c5SXYb8RzJk3jF3K.jpg" },
+  { title: "Shogun",            year: 2024, genre: "History", rating: 9.0, poster: "https://image.tmdb.org/t/p/w500/7O4iVfOMQmdCSxhOg1WNzG1SyWA.jpg" },
+  { title: "Fallout",           year: 2024, genre: "Sci-Fi",  rating: 8.5, poster: "https://image.tmdb.org/t/p/w500/AnsSK2kSRxc09RkL5HUXF3A1R6G.jpg" },
 ];
 
 export default function Dashboard() {
@@ -57,6 +58,7 @@ export default function Dashboard() {
   const [sessionNote,   setSessionNote]   = useState(null);
   const [aiLatency,     setAiLatency]     = useState(null);
   const [noResults,     setNoResults]     = useState(false);
+  const [selectedMediaItem, setSelectedMediaItem] = useState(null);
 
   // Canvas particles
   useEffect(() => {
@@ -261,7 +263,17 @@ export default function Dashboard() {
           </div>
           <div className="recs-grid">
             {TRENDING_NOW.map((item, i) => (
-              <GuestMediaCard key={i} item={item} />
+              <GuestMediaCard key={i} item={item} onClick={() => setSelectedMediaItem({ 
+                media: { 
+                  id: null, 
+                  title: item.title, 
+                  posterUrl: item.poster, 
+                  releaseDate: item.year ? `${item.year}-01-01` : null, 
+                  avgRating: item.rating, 
+                  type: item.genre, 
+                  synopsis: "Log in or sign up to fetch full details, AI reviews, and add this to your personal collection!" 
+                } 
+              })} />
             ))}
           </div>
         </section>
@@ -277,7 +289,17 @@ export default function Dashboard() {
           </div>
           <div className="recs-grid">
             {ALL_TIME_PICKS.map((item, i) => (
-              <GuestMediaCard key={i} item={item} gold />
+              <GuestMediaCard key={i} item={item} gold onClick={() => setSelectedMediaItem({ 
+                media: { 
+                  id: null, 
+                  title: item.title, 
+                  posterUrl: item.poster, 
+                  releaseDate: item.year ? `${item.year}-01-01` : null, 
+                  avgRating: item.rating, 
+                  type: item.genre, 
+                  synopsis: "Log in or sign up to fetch full details, AI reviews, and add this to your personal collection!" 
+                } 
+              })} />
             ))}
           </div>
 
@@ -331,20 +353,33 @@ export default function Dashboard() {
           ) : (
             <div className="recs-grid">
               {recs.slice(0, 6).map(item => (
-                <BingeResultCard key={item.mediaId} item={item} blurb={aiBlurbs?.[item.title]} />
+                <BingeResultCard key={item.mediaId} item={item} blurb={aiBlurbs?.[item.title]} onClick={() => setSelectedMediaItem({
+                  media: {
+                    id: item.mediaId,
+                    title: item.title,
+                    posterUrl: item.posterUrl,
+                    releaseDate: item.releaseDate,
+                    avgRating: item.avgRating,
+                    genre: item.genre
+                  }
+                })} />
               ))}
             </div>
           )}
         </section>
+      )}
+
+      {selectedMediaItem && (
+        <MediaDetailPanel item={selectedMediaItem} onClose={() => setSelectedMediaItem(null)} />
       )}
     </div>
   );
 }
 
 // ─── Guest Media Card ──────────────────────────────────────────
-function GuestMediaCard({ item, gold }) {
+function GuestMediaCard({ item, gold, onClick }) {
   return (
-    <div className="rec-card media-card">
+    <div className="rec-card media-card" onClick={onClick} style={{ cursor: "pointer" }}>
       <img
         src={item.poster || FALLBACK_POSTER}
         alt={item.title}
@@ -368,13 +403,13 @@ function GuestMediaCard({ item, gold }) {
 // ─── Binge Result Card ────────────────────────────────────────
 const TIER_COLORS_MAP = { S:"#e94057", A:"#f5840c", B:"#f5c518", C:"#00c896", D:"#a78bfa" };
 
-function BingeResultCard({ item, blurb }) {
+function BingeResultCard({ item, blurb, onClick }) {
   const tier = item.tierRank;
   const tierColor = TIER_COLORS_MAP[tier];
   const score = item.score;
 
   return (
-    <div className="rec-card media-card">
+    <div className="rec-card media-card" onClick={onClick} style={{ cursor: "pointer" }}>
       <img
         src={item.posterUrl || FALLBACK_POSTER}
         alt={item.title}
