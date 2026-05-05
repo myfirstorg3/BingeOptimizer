@@ -8,12 +8,12 @@ const prisma = new PrismaClient();
 const storage = multer.memoryStorage();
 export const upload = multer({
   storage,
-  limits: { fileSize: 4 * 1024 * 1024 }, // 4MB
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
-    if (['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.mimetype)) {
+    if (['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'].includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only images are allowed'));
+      cb(new Error('Only images are allowed (JPEG, PNG, GIF, WEBP, HEIC)'));
     }
   },
 });

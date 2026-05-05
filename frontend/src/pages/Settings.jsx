@@ -20,6 +20,29 @@ function avSrc(user) {
   return `https://api.dicebear.com/7.x/identicon/svg?seed=${user.username || "user"}`;
 }
 
+// Custom Image component to fetch images via JavaScript and bypass Ngrok's HTML warning page
+function AvatarImage({ user, src, className, alt }) {
+  const [blobSrc, setBlobSrc] = useState(null);
+  
+  useEffect(() => {
+    const targetSrc = src || avSrc(user);
+    // If it's an external dicebear URL or local preview, just use it directly
+    if (!targetSrc.includes("api/users/avatar")) {
+      setBlobSrc(targetSrc);
+      return;
+    }
+    
+    // If it's an API URL, fetch it using our globally overridden fetch (which adds the ngrok bypass header)
+    fetch(targetSrc)
+      .then(res => res.blob())
+      .then(blob => setBlobSrc(URL.createObjectURL(blob)))
+      .catch(() => setBlobSrc(`https://api.dicebear.com/7.x/identicon/svg?seed=${user?.username || "fallback"}`));
+      
+  }, [user, src]);
+
+  return <img src={blobSrc || avSrc(user)} className={className} alt={alt || "Avatar"} />;
+}
+
 export default function Settings() {
   const { user: authUser, token, logout } = useAuth();
   const navigate = useNavigate();
@@ -75,7 +98,7 @@ export default function Settings() {
           <aside className="settings-sidebar glass" ref={sidebarRef}>
             <div className="sidebar-header">
               <div className="sidebar-avatar">
-                <img src={avSrc(profile)} alt="Avatar" />
+                <AvatarImage user={profile} />
                 {profile?.showOnlineStatus && <div className="avatar-status-dot" />}
               </div>
               <div>
@@ -375,7 +398,7 @@ function FriendsSection({ API, authHeader, searchUser, onClearSearchUser }) {
           <div className="friends-list">
             {data.incoming.map(req => (
               <div key={req.id} className="friend-item incoming">
-                <img src={avSrc(req.user)} className="friend-avatar" alt={req.user?.username} />
+                <AvatarImage user={req.user} className="friend-avatar" alt={req.user?.username} />
                 <div className="friend-info">
                   <div className="friend-name">{req.user?.username}</div>
                   <div className="friend-sub font-mono">{[req.user?.firstName, req.user?.lastName].filter(Boolean).join(" ") || "Wants to be your friend"}</div>
@@ -401,7 +424,7 @@ function FriendsSection({ API, authHeader, searchUser, onClearSearchUser }) {
           <div className="friends-list">
             {data.friends.map(f => (
               <div key={f.friendshipId} className="friend-item friend-item--clickable" onClick={() => setViewing(f.user)}>
-                <img src={avSrc(f.user)} className="friend-avatar" alt={f.user?.username} />
+                <AvatarImage user={f.user} className="friend-avatar" alt={f.user?.username} />
                 <div className="friend-info">
                   <div className="friend-name">{f.user?.username}</div>
                   <div className="friend-sub font-mono">Friends since {new Date(f.since).toLocaleDateString()}</div>
@@ -420,7 +443,7 @@ function FriendsSection({ API, authHeader, searchUser, onClearSearchUser }) {
           <div className="friends-list">
             {data.outgoing.map(req => (
               <div key={req.id} className="friend-item">
-                <img src={avSrc(req.friend)} className="friend-avatar" alt={req.friend?.username} />
+                <AvatarImage user={req.friend} className="friend-avatar" alt={req.friend?.username} />
                 <div className="friend-info">
                   <div className="friend-name">{req.friend?.username}</div>
                   <div className="friend-sub font-mono text-muted">Awaiting response…</div>
@@ -478,7 +501,7 @@ function ProfileSection({ profile, onUpdate, API, authHeader }) {
         <h3 className="card-title">Avatar</h3>
         <div className="avatar-section">
           <div className="avatar-preview-wrap">
-            <img src={currentAvatar} alt="Avatar" className="avatar-preview-img" />
+            <AvatarImage src={currentAvatar} user={profile} className="avatar-preview-img" alt="Avatar" />
             {uploading && <div className="avatar-upload-overlay"><div className="settings-spinner sm" /></div>}
           </div>
           <div className="avatar-actions">
