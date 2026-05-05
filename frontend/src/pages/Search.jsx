@@ -5,7 +5,7 @@ import { searchOMDB, normalize } from "../services/omdb";
 import { useAuth } from "../context/AuthContext";
 import "./Search.css";
 
-const API_BASE = "http://localhost:5000";
+const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:5000");
 
 async function getMediaDetails(imdbID) {
   const res = await fetch(`${API_BASE}/api/media/${imdbID}`);

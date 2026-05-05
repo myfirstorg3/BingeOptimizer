@@ -4,7 +4,7 @@ import anime from "animejs";
 import { useAuth } from "../context/AuthContext";
 import "./TierList.css";
 
-const API_BASE = "http://localhost:5000";
+const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:5000");
 const TIERS = ["S", "A", "B", "C", "D"];
 const TIER_COLORS = {
   S: { bg: "#e94057", label: "#fff" },

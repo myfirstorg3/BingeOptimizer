@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { searchOMDB } from "../services/omdb";
 import "./TierList.css";
 
-const API_BASE = "http://localhost:5000";
+const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:5000");
 const TIERS = ["S", "A", "B", "C", "D"];
 const TIER_COLORS = {
   S: { bg: "#e94057", glow: "rgba(233,64,87,0.2)", label: "#fff" },

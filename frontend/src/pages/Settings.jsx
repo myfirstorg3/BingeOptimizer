@@ -16,7 +16,7 @@ const MENU_ITEMS = [
 
 function avSrc(user) {
   if (!user) return `https://api.dicebear.com/7.x/identicon/svg?seed=anon`;
-  if (user.avatarUrl) return `http://localhost:5000${user.avatarUrl}`;
+  if (user.avatarUrl) return `${import.meta.env.VITE_API_URL || "http://localhost:5000"}${user.avatarUrl}`;
   return `https://api.dicebear.com/7.x/identicon/svg?seed=${user.username || "user"}`;
 }
 

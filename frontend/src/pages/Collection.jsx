@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import MediaDetailPanel from "./MediaDetailPanel";
 import "./Collection.css";
 
-const API_BASE = "http://localhost:5000";
+const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:5000");
 const FALLBACK  = "https://via.placeholder.com/300x450/0a0a0f/00e5ff?text=NO+POSTER";
 
 const STATUS_META = {

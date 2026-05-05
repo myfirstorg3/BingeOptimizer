@@ -11,7 +11,9 @@ export async function getMovieById(imdbID) {
 
 export async function getMediaDetailsFromBackend(imdbID) {
   // Try to reach the backend running on port 5000
-  const res = await fetch(`http://localhost:5000/api/media/${imdbID}`);
+  const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/media/${imdbID}`, {
+    headers: { "ngrok-skip-browser-warning": "true" }
+  });
   if (!res.ok) throw new Error("Failed to fetch from backend");
   const data = await res.json();
   return data; // { media, aiSummary }
