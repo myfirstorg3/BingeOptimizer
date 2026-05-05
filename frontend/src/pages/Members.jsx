@@ -20,7 +20,6 @@ function MemberCard({ member }) {
 
   return (
     <div className="member-card glass" style={{ padding: '40px 24px', alignItems: 'center' }}>
-      {/* Profile Picture */}
       <div 
         className="member-pic-wrapper" 
         style={{ 
@@ -39,7 +38,6 @@ function MemberCard({ member }) {
           alt={member.name}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           onError={(e) => { 
-            // Fallback if image not found: hide img and show initials
             e.target.style.display = 'none';
             e.target.parentElement.style.display = 'flex';
             e.target.parentElement.style.alignItems = 'center';
@@ -49,7 +47,6 @@ function MemberCard({ member }) {
         />
       </div>
 
-      {/* Info */}
       <div className="member-info" style={{ alignItems: 'center', width: '100%' }}>
         <p className="member-name" style={{ textAlign: 'center', fontSize: '22px' }}>{member.name}</p>
       </div>
@@ -62,7 +59,6 @@ export default function Members() {
     <main className="page grid-bg">
       <div className="container section">
 
-        {/* ── Header ── */}
         <div className="members-header">
           <span className="tag tag--pink">Crew</span>
           <h1 className="font-display members-title">
@@ -75,7 +71,6 @@ export default function Members() {
 
         <hr className="divider" style={{ margin: "16px 0 32px" }} />
 
-        {/* ── Grid ── */}
         <div className="members-grid">
           {MEMBERS.map((m) => (
             <MemberCard key={m.id} member={m} />

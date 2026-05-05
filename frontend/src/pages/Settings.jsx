@@ -20,7 +20,6 @@ function avSrc(user) {
   return `https://api.dicebear.com/7.x/identicon/svg?seed=${user.username || "user"}`;
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function Settings() {
   const { user: authUser, token, logout } = useAuth();
   const navigate = useNavigate();
@@ -109,7 +108,6 @@ export default function Settings() {
   );
 }
 
-// ─── Profile Search Bar ───────────────────────────────────────────────────────
 function ProfileSearch({ API, token, onSelectUser }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -174,7 +172,6 @@ function ProfileSearch({ API, token, onSelectUser }) {
   );
 }
 
-// ─── Friend Profile (Inline) ──────────────────────────────────────────────────
 function FriendProfile({ user, API, token, onClose, friendsData, onReqSent }) {
   const authHeader = { headers: { Authorization: `Bearer ${token}` } };
   const [pubData, setPubData] = useState(null);
@@ -322,7 +319,6 @@ function FriendProfile({ user, API, token, onClose, friendsData, onReqSent }) {
   );
 }
 
-// ─── Friends Section ──────────────────────────────────────────────────────────
 function FriendsSection({ API, authHeader, searchUser, onClearSearchUser }) {
   const [data, setData] = useState({ friends: [], incoming: [], outgoing: [] });
   const [loading, setLoading] = useState(true);
@@ -439,7 +435,6 @@ function FriendsSection({ API, authHeader, searchUser, onClearSearchUser }) {
   );
 }
 
-// ─── Profile Section ──────────────────────────────────────────────────────────
 function ProfileSection({ profile, onUpdate, API, authHeader }) {
   const [form, setForm] = useState({
     username: profile?.username || "", email: profile?.email || "",
@@ -529,7 +524,6 @@ function ProfileSection({ profile, onUpdate, API, authHeader }) {
   );
 }
 
-// ─── Security Section ─────────────────────────────────────────────────────────
 function SecuritySection({ API, authHeader }) {
   const [cur, setCur] = useState(""); const [next, setNext] = useState(""); const [conf, setConf] = useState("");
   const [msg, setMsg] = useState(null); const [err, setErr] = useState(null); const [saving, setSaving] = useState(false);
@@ -555,7 +549,6 @@ function SecuritySection({ API, authHeader }) {
   );
 }
 
-// ─── Danger Zone ──────────────────────────────────────────────────────────────
 function DisconnectSection({ logout, navigate }) {
   return (
     <div className="settings-card glass">

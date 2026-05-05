@@ -26,7 +26,6 @@ async function apiFetch(path, token, opts = {}) {
   return res.json();
 }
 
-// ─── Sort order: watching → unwatched → completed ────────────────
 const SORT_ORDER = { watching: 0, unwatched: 1, completed: 2 };
 function sortItems(items) {
   return [...items].sort((a, b) => {

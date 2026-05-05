@@ -376,7 +376,6 @@ export default function Dashboard() {
   );
 }
 
-// ─── Guest Media Card ──────────────────────────────────────────
 function GuestMediaCard({ item, gold, onClick }) {
   return (
     <div className="rec-card media-card" onClick={onClick} style={{ cursor: "pointer" }}>
@@ -400,7 +399,6 @@ function GuestMediaCard({ item, gold, onClick }) {
   );
 }
 
-// ─── Binge Result Card ────────────────────────────────────────
 const TIER_COLORS_MAP = { S:"#e94057", A:"#f5840c", B:"#f5c518", C:"#00c896", D:"#a78bfa" };
 
 function BingeResultCard({ item, blurb, onClick }) {
