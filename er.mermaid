@@ -1,14 +1,17 @@
-
 erDiagram
     USERS {
         uuid id PK
         string username
         string email
         string password_hash
-        string profile_picture_url
+        string first_name
+        string last_name
+        string avatar_url
         text bio
         boolean is_public
         boolean show_online_status
+        string login_provider
+        string provider_id
         timestamp created_at
         timestamp updated_at
     }
@@ -18,8 +21,29 @@ erDiagram
         uuid user_id FK
         boolean email_notifications
         boolean push_notifications
-        json preferred_moods
+        string preferred_moods
+        string preferred_genres
         timestamp updated_at
+    }
+
+    USER_FRIENDSHIPS {
+        uuid id PK
+        uuid user_id FK
+        uuid friend_id FK
+        string status
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    USER_AVATARS {
+        uuid id PK
+        uuid user_id FK
+        blob avatar_data
+        string file_name
+        integer file_size
+        string mime_type
+        boolean is_default
+        timestamp created_at
     }
 
     MEDIA {
@@ -27,13 +51,22 @@ erDiagram
         string external_id
         string external_source
         string title
+        string description
         string poster_url
+        string backdrop_url
         string type
         date release_date
+        date end_date
         integer duration_minutes
+        integer number_of_seasons
+        integer number_of_episodes
         text synopsis
         decimal avg_rating
+        integer rating_count
+        string language
+        string country
         timestamp last_review_fetch_at
+        timestamp last_api_fetch_at
         timestamp created_at
         timestamp updated_at
     }
@@ -41,6 +74,7 @@ erDiagram
     GENRES {
         uuid id PK
         string name
+        timestamp created_at
     }
 
     MEDIA_GENRES {
@@ -66,7 +100,9 @@ erDiagram
         text summary_text
         decimal sentiment_score
         integer review_count_basis
+        string llm_model_used
         timestamp generated_at
+        timestamp next_update_at
     }
 
     MEDIA_PAGE_VIEWS {
@@ -74,6 +110,20 @@ erDiagram
         uuid media_id FK
         uuid user_id FK
         timestamp viewed_at
+    }
+
+    USER_MEDIA_STATUS {
+        uuid id PK
+        uuid user_id FK
+        uuid media_id FK
+        string watch_status
+        decimal personal_rating
+        integer episodes_watched
+        integer total_episodes
+        integer runtime_watched_mins
+        timestamp last_watched_at
+        timestamp added_at
+        timestamp updated_at
     }
 
     COLLECTIONS {
@@ -92,7 +142,7 @@ erDiagram
         uuid id PK
         uuid collection_id FK
         uuid media_id FK
-        char user_score
+        integer user_score
         text notes
         timestamp added_at
     }
@@ -103,6 +153,7 @@ erDiagram
         string title
         string description
         boolean is_public
+        uuid collection_id FK
         timestamp created_at
         timestamp updated_at
     }
@@ -111,21 +162,8 @@ erDiagram
         uuid id PK
         uuid tier_list_id FK
         uuid media_id FK
-        char tier
+        string tier
         integer position
-        timestamp added_at
-    }
-
-    USER_MEDIA_STATUS {
-        uuid id PK
-        uuid user_id FK
-        uuid media_id FK
-        string watch_status
-        decimal personal_rating
-        integer episodes_watched
-        integer total_episodes
-        integer runtime_watched_mins
-        timestamp last_watched_at
         timestamp added_at
     }
 
@@ -133,16 +171,28 @@ erDiagram
         uuid id PK
         uuid user_id FK
         integer time_available_mins
-        json selected_moods
+        string selected_moods
         string genre_filter
-        json candidate_media_ids
-        json ranked_results
+        string candidate_media_ids
+        string ranked_results
         string llm_model_used
         integer llm_latency_ms
         timestamp created_at
     }
 
-    USERS ||--o{ USER_PREFERENCES : "has"
+    MEDIA_EMBEDDINGS {
+        uuid id PK
+        uuid media_id FK
+        string embedding
+        string title_embedding
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    USERS ||--o| USER_PREFERENCES : "has"
+    USERS ||--o{ USER_FRIENDSHIPS : "initiates"
+    USERS ||--o{ USER_FRIENDSHIPS : "receives"
+    USERS ||--o{ USER_AVATARS : "has"
     USERS ||--o{ COLLECTIONS : "owns"
     USERS ||--o{ TIER_LISTS : "creates"
     USERS ||--o{ USER_MEDIA_STATUS : "tracks"
@@ -156,7 +206,9 @@ erDiagram
     MEDIA ||--o{ TIER_LIST_ITEMS : "ranked in"
     MEDIA ||--o{ USER_MEDIA_STATUS : "tracked by"
     MEDIA ||--o{ MEDIA_PAGE_VIEWS : "viewed via"
+    MEDIA ||--o| MEDIA_EMBEDDINGS : "has"
 
     GENRES ||--o{ MEDIA_GENRES : "groups"
     COLLECTIONS ||--o{ COLLECTION_ITEMS : "contains"
+    COLLECTIONS ||--o{ TIER_LISTS : "groups"
     TIER_LISTS ||--o{ TIER_LIST_ITEMS : "ranks"
