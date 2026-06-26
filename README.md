@@ -165,52 +165,6 @@ FRONTEND_URL=<your_vercel_url>
 VITE_API_URL=<your_render_backend_url>
 ```
 
----
-
-## 📁 Project Structure
----
-BingeOptimizer/
-
-├── backend/
-
-│   ├── prisma/
-
-│   │   └── schema.prisma
-
-│   ├── src/
-
-│   │   ├── controllers/
-
-│   │   ├── middleware/
-
-│   │   ├── routes/
-
-│   │   └── services/
-
-│   ├── .env.example
-
-│   └── package.json
-
-├── frontend/
-
-│   ├── src/
-
-│   │   ├── components/
-
-│   │   ├── context/
-
-│   │   ├── data/
-
-│   │   ├── hooks/
-
-│   │   ├── pages/
-
-│   │   └── services/
-
-│   └── package.json
-
-└── README.md
-
 ## ✨ Features
 
 - 🎯 **Binge Optimizer** — AI scores your collection based on mood, time, and genre
