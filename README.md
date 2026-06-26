@@ -1,98 +1,137 @@
 # 🎬 Blastoise – The Binge Optimizer
-
 > Optimize your free time. Watch smarter, not longer.
 
 Blastoise is a smart content curation engine that helps you decide what to watch based on your available time and current mood. Featuring an AI-powered Binge Optimizer, it scores your entire media collection and builds the perfect viewing session, complete with Gemini AI-generated reviews.
+
+🌐 **Live Demo:** [Frontend on Vercel](#) · [Backend on Render](#)
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** React, Vite, GSAP, Anime.js (CSS styling with custom aesthetic)
-- **Backend:** Node.js, Express.js
-- **Database:** SQLite (managed via Prisma ORM)
-- **AI Integrations:** Google Gemini 2.0 Flash
-- **External APIs:** OMDB API (for media fetching)
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18, Vite 7, GSAP, Anime.js |
+| Backend | Node.js, Express.js |
+| Database | PostgreSQL (production) · SQLite (local dev) |
+| ORM | Prisma |
+| AI | Google Gemini 2.0 Flash |
+| External API | OMDB API |
+| Deployment | Vercel (frontend) · Render (backend + DB) |
 
 ---
 
-## 🚀 Getting Started
-
-Follow these steps to run the application locally on your machine.
+## 🚀 Getting Started Locally
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (v18+ recommended)
+- [Node.js](https://nodejs.org/) v18+
 - `npm` (comes with Node)
+- OMDB API key → [omdbapi.com/apikey.aspx](https://www.omdbapi.com/apikey.aspx) (free)
+- Gemini API key → [aistudio.google.com/apikey](https://aistudio.google.com/apikey) (free)
 
-### 1. Setup the Backend
+---
 
-Open a terminal and navigate to the backend directory:
+### 1. Clone the repo
+
 ```bash
-cd backend
+git clone https://github.com/myfirstorg3/BingeOptimizer.git
+cd BingeOptimizer
 ```
 
-Install dependencies:
+### 2. Setup the Backend
+
 ```bash
+cd backend
 npm install
 ```
 
-Set up your environment variables:
-1. Copy the example file: `cp .env.example .env`
-2. Open `.env` and make sure the following essential keys are set:
-   - `DATABASE_URL="file:./prisma/dev.db"` (default for SQLite)
-   - `OMDB_API_KEY="your_omdb_key"` (Required for fetching movies)
-   - `GEMINI_API_KEY="your_gemini_key"` (Required for AI reviews and binge optimizer)
+Create your environment file:
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and fill in your values:
+
+```env
+PORT=5000
+NODE_ENV=development
+DATABASE_URL="file:./prisma/dev.db"
+JWT_SECRET="your_random_secret"
+OMDB_API_KEY="your_omdb_key"
+GEMINI_API_KEY="your_gemini_key"
+FRONTEND_URL="http://localhost:5173"
+```
 
 Initialize the database:
+
 ```bash
 npx prisma generate
 npx prisma db push
 ```
 
-Start the backend server:
+Start the backend:
+
 ```bash
 npm run dev
 ```
-*The backend will run on `http://localhost:5000`.*
 
-### 2. Setup the Frontend
+Backend runs at `http://localhost:5000`
+Health check: `http://localhost:5000/api/health`
 
-Open a **new** terminal and navigate to the frontend directory:
+---
+
+### 3. Setup the Frontend
+
+Open a **new terminal**:
+
 ```bash
 cd frontend
-```
-
-Install dependencies:
-```bash
 npm install
 ```
 
-Start the frontend development server:
+Create your environment file:
+
+```bash
+cp .env.example .env
+```
+
+Open `frontend/.env` and set:
+
+```env
+VITE_API_URL=http://localhost:5000
+```
+
+Start the frontend:
+
 ```bash
 npm run dev
 ```
-*The frontend will run on `http://localhost:5173` (or whatever port Vite assigns).*
+
+Frontend runs at `http://localhost:3000`
 
 ---
 
 ## 🗄️ Database Management
 
-Blastoise uses **Prisma** with a local SQLite database (`backend/prisma/dev.db`).
+Blastoise uses **Prisma ORM** with SQLite locally and PostgreSQL in production.
 
-### Viewing & Editing Data (GUI)
-The easiest way to view or edit the database is using Prisma Studio. In the `backend` folder, run:
+### View data with Prisma Studio
+
 ```bash
+# From the backend directory
 npx prisma studio
 ```
-This will open a beautiful web interface at `http://localhost:5556` where you can see all your tables and data.
 
-### Running SQL Queries
-If you want to run raw SQL queries against the database, you can use the SQLite command line tool:
+Opens at `http://localhost:5556`
+
+### Run raw SQL queries
+
 ```bash
 # From the backend directory
 sqlite3 prisma/dev.db
 ```
-Then you can run queries like:
+
 ```sql
 SELECT * FROM User;
 SELECT title, type, releaseDate FROM Media;
@@ -101,10 +140,92 @@ SELECT title, type, releaseDate FROM Media;
 
 ---
 
-## 👤 Authors
+## 🌐 Deployment
 
-- **Aaryan Degama**
-- **Manas Singh**
-- **Jalendu Pandey**
-- **Geethika**
-- **Archee Jaiswal**
+| Service | Platform | URL |
+|---------|----------|-----|
+| Frontend | Vercel | [link](#) |
+| Backend | Render | [link](#) |
+| Database | Render PostgreSQL | managed |
+
+### Environment variables needed on Render (backend):
+
+```env
+NODE_ENV=production
+DATABASE_URL=<your_render_postgres_url>
+JWT_SECRET=<your_secret>
+OMDB_API_KEY=<your_key>
+GEMINI_API_KEY=<your_key>
+FRONTEND_URL=<your_vercel_url>
+```
+
+### Environment variables needed on Vercel (frontend):
+
+```env
+VITE_API_URL=<your_render_backend_url>
+```
+
+---
+
+## 📁 Project Structure
+---
+BingeOptimizer/
+
+├── backend/
+
+│   ├── prisma/
+
+│   │   └── schema.prisma
+
+│   ├── src/
+
+│   │   ├── controllers/
+
+│   │   ├── middleware/
+
+│   │   ├── routes/
+
+│   │   └── services/
+
+│   ├── .env.example
+
+│   └── package.json
+
+├── frontend/
+
+│   ├── src/
+
+│   │   ├── components/
+
+│   │   ├── context/
+
+│   │   ├── data/
+
+│   │   ├── hooks/
+
+│   │   ├── pages/
+
+│   │   └── services/
+
+│   └── package.json
+
+└── README.md
+
+## ✨ Features
+
+- 🎯 **Binge Optimizer** — AI scores your collection based on mood, time, and genre
+- 🤖 **Gemini AI Reviews** — auto-generated critic-style review summaries
+- 📚 **Collections** — organize your watchlist into custom collections
+- 🏆 **Tier Lists** — rank your media S through D
+- 🔍 **Search** — fetch any movie or show via OMDB
+- 👤 **Auth** — register, login, profile, avatar upload
+- 👥 **Friends** — send/accept friend requests, view public profiles
+
+---
+
+## 🔑 API Keys Required
+
+| Key | Where to get it | Free tier |
+|-----|----------------|-----------|
+| `OMDB_API_KEY` | [omdbapi.com](https://www.omdbapi.com/apikey.aspx) | 1,000 req/day |
+| `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com/apikey) | Yes |
