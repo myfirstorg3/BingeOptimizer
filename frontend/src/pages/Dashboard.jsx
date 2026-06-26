@@ -22,22 +22,22 @@ const TIME_OPTIONS = [
 ];
 
 // Curated all-time favorite picks (for guest landing)
-const ALL_TIME_PICKS = [
-  { title: "The Dark Knight",      year: 2008, imdb: "tt0468569", rating: 9.0, genre: "Action", poster: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg" },
-  { title: "Inception",            year: 2010, imdb: "tt1375666", rating: 8.8, genre: "Sci-Fi",  poster: "https://image.tmdb.org/t/p/w500/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg" },
-  { title: "Interstellar",         year: 2014, imdb: "tt0816692", rating: 8.7, genre: "Sci-Fi",  poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" },
-  { title: "Breaking Bad",         year: 2008, imdb: "tt0903747", rating: 9.5, genre: "Drama",   poster: "https://image.tmdb.org/t/p/w500/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg" },
-  { title: "Parasite",             year: 2019, imdb: "tt6751668", rating: 8.5, genre: "Thriller", poster: "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg" },
-  { title: "Attack on Titan",      year: 2013, imdb: "tt2560140", rating: 9.0, genre: "Anime",   poster: "https://image.tmdb.org/t/p/w500/hTP1DtLGFamjfu8WqjnuQdP1n4i.jpg" },
+const TRENDING_NOW = [
+  { title: "Dune: Part Two",  year: 2024, genre: "Sci-Fi",  rating: 8.5, poster: `https://img.omdbapi.com/?i=tt15239678&apikey=260e2806` },
+  { title: "Poor Things",     year: 2023, genre: "Drama",   rating: 8.0, poster: `https://img.omdbapi.com/?i=tt14230458&apikey=260e2806` },
+  { title: "Oppenheimer",     year: 2023, genre: "History", rating: 8.9, poster: `https://img.omdbapi.com/?i=tt15398776&apikey=260e2806` },
+  { title: "The Bear",        year: 2022, genre: "Drama",   rating: 8.6, poster: `https://img.omdbapi.com/?i=tt14452776&apikey=260e2806` },
+  { title: "Shogun",          year: 2024, genre: "History", rating: 9.0, poster: `https://img.omdbapi.com/?i=tt2788316&apikey=260e2806` },
+  { title: "Fallout",         year: 2024, genre: "Sci-Fi",  rating: 8.5, poster: `https://img.omdbapi.com/?i=tt21064584&apikey=260e2806` },
 ];
 
-const TRENDING_NOW = [
-  { title: "Dune: Part Two",   year: 2024, genre: "Sci-Fi",  rating: 8.5, poster: "https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2JGjjc91p.jpg" },
-  { title: "Poor Things",       year: 2023, genre: "Drama",   rating: 8.0, poster: "https://image.tmdb.org/t/p/w500/kCGlIMHnOm8Ph1ih2qA82t4D1R7.jpg" },
-  { title: "Oppenheimer",       year: 2023, genre: "History", rating: 8.9, poster: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg" },
-  { title: "The Bear",          year: 2022, genre: "Drama",   rating: 8.6, poster: "https://image.tmdb.org/t/p/w500/rZ6X1vQz7Z0c5SXYb8RzJk3jF3K.jpg" },
-  { title: "Shogun",            year: 2024, genre: "History", rating: 9.0, poster: "https://image.tmdb.org/t/p/w500/7O4iVfOMQmdCSxhOg1WNzG1SyWA.jpg" },
-  { title: "Fallout",           year: 2024, genre: "Sci-Fi",  rating: 8.5, poster: "https://image.tmdb.org/t/p/w500/AnsSK2kSRxc09RkL5HUXF3A1R6G.jpg" },
+const ALL_TIME_PICKS = [
+  { title: "The Dark Knight",  year: 2008, imdb: "tt0468569", rating: 9.0, genre: "Action",   poster: `https://img.omdbapi.com/?i=tt0468569&apikey=260e2806` },
+  { title: "Inception",        year: 2010, imdb: "tt1375666", rating: 8.8, genre: "Sci-Fi",   poster: `https://img.omdbapi.com/?i=tt1375666&apikey=260e2806` },
+  { title: "Interstellar",     year: 2014, imdb: "tt0816692", rating: 8.7, genre: "Sci-Fi",   poster: `https://img.omdbapi.com/?i=tt0816692&apikey=260e2806` },
+  { title: "Breaking Bad",     year: 2008, imdb: "tt0903747", rating: 9.5, genre: "Drama",    poster: `https://img.omdbapi.com/?i=tt0903747&apikey=260e2806` },
+  { title: "Parasite",         year: 2019, imdb: "tt6751668", rating: 8.5, genre: "Thriller", poster: `https://img.omdbapi.com/?i=tt6751668&apikey=260e2806` },
+  { title: "Attack on Titan",  year: 2013, imdb: "tt2560140", rating: 9.0, genre: "Anime",    poster: `https://img.omdbapi.com/?i=tt2560140&apikey=260e2806` },
 ];
 
 export default function Dashboard() {
