@@ -5,7 +5,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import "./Profile.css";
 
-const API = "http://localhost:5000/api";
+const API = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api`;
 
 const MENU_ITEMS = [
   { id: "profile",    icon: "◈", label: "Profile" },
